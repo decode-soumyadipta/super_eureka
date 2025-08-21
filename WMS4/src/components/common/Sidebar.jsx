@@ -1,4 +1,4 @@
-import { BarChart2, DollarSign, Menu, QrCode, Settings, ShoppingBag, ShoppingCart, TrendingUp, Users, LogOut, User } from "lucide-react";
+import { BarChart2, DollarSign, Menu, QrCode, Settings, ShoppingBag, ShoppingCart, TrendingUp, Users, LogOut, User, Trash2, Globe, Upload } from "lucide-react";
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
@@ -47,6 +47,26 @@ const SIDEBAR_ITEMS = [
 		href: "http://127.0.0.1:8050/",
 		external: true,
 		adminOnly: true
+	},
+	// New buttons added below
+	{
+		name: "Request E-waste Disposal",
+		icon: Trash2,
+		color: "#ff9800",
+		href: "/disposal",
+	},
+	{
+		name: "E-Shunya Awareness",
+		icon: Globe,
+		color: "#2196f3",
+		href: "/e-shunya-community",
+		external: true
+	},
+	{
+		name: "Upload Report to IPFS",
+		icon: Upload,
+		color: "#9c27b0",
+		href: "/ipfs-upload",
 	},
 ];
 

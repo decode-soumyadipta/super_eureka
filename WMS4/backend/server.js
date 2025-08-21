@@ -27,6 +27,15 @@ import {
     deviceMoveValidation
 } from './controllers/deviceController.js';
 
+// Import disposal controller
+import {
+    createDisposalRequest,
+    getDisposalRequests,
+    getDisposalRequestById,
+    updateDisposalRequestStatus,
+    disposalRequestValidation
+} from './controllers/disposalController.js';
+
 // Import middleware
 import { authenticateToken, requireAdmin, requireSameDepartment } from './middleware/auth.js';
 
@@ -105,6 +114,22 @@ app.get('/api/devices/stats', authenticateToken, getDepartmentStats);
 
 // Move device to different location (protected)
 app.put('/api/devices/:device_id/move', authenticateToken, deviceMoveValidation, moveDevice);
+
+// =====================
+// E-Waste Disposal Routes
+// =====================
+
+// Create new disposal request (protected)
+app.post('/api/disposal/request', authenticateToken, disposalRequestValidation, createDisposalRequest);
+
+// Get all disposal requests for current user/department (protected)
+app.get('/api/disposal/requests', authenticateToken, getDisposalRequests);
+
+// Get single disposal request by ID (protected)
+app.get('/api/disposal/requests/:requestId', authenticateToken, getDisposalRequestById);
+
+// Update disposal request status (protected - vendor/admin only)
+app.put('/api/disposal/requests/:requestId/status', authenticateToken, updateDisposalRequestStatus);
 
 // =====================
 // Department Routes

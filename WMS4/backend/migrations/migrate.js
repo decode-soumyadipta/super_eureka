@@ -16,7 +16,7 @@ const createTables = async () => {
                 email VARCHAR(255) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL,
                 department VARCHAR(100) NOT NULL,
-                role ENUM('admin', 'user') DEFAULT 'user',
+                role ENUM('admin', 'user', 'vendor') DEFAULT 'user',
                 phone VARCHAR(20),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -115,6 +115,36 @@ const createTables = async () => {
             )
         `;
 
+        // Create disposal_requests table
+        const createDisposalRequestsTable = `
+            CREATE TABLE IF NOT EXISTS disposal_requests (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                request_id VARCHAR(20) NOT NULL UNIQUE,
+                department VARCHAR(100) NOT NULL,
+                contact_name VARCHAR(100) NOT NULL,
+                contact_phone VARCHAR(20) NOT NULL,
+                contact_email VARCHAR(100) NOT NULL,
+                pickup_address TEXT NOT NULL,
+                latitude DECIMAL(10, 8) NOT NULL,
+                longitude DECIMAL(11, 8) NOT NULL,
+                e_waste_description TEXT NOT NULL,
+                weight_kg DECIMAL(10, 2),
+                item_count INT,
+                preferred_date DATE,
+                preferred_time_slot VARCHAR(50),
+                additional_notes TEXT,
+                status ENUM('pending', 'approved', 'rejected', 'completed') DEFAULT 'pending',
+                created_by INT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                approved_by INT,
+                approved_at TIMESTAMP NULL,
+                vendor_id INT,
+                FOREIGN KEY (created_by) REFERENCES users(id),
+                FOREIGN KEY (approved_by) REFERENCES users(id)
+            )
+        `;
+
         // Execute table creation queries
         const tables = [
             { name: 'users', query: createUsersTable },
@@ -122,7 +152,8 @@ const createTables = async () => {
             { name: 'locations', query: createLocationsTable },
             { name: 'devices', query: createDevicesTable },
             { name: 'device_logs', query: createDeviceLogsTable },
-            { name: 'maintenance_records', query: createMaintenanceTable }
+            { name: 'maintenance_records', query: createMaintenanceTable },
+            { name: 'disposal_requests', query: createDisposalRequestsTable }
         ];
 
         for (const table of tables) {

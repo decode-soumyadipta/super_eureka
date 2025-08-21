@@ -1,3 +1,170 @@
+/* Leaflet Map Styles - Must be first */
+@import 'leaflet/dist/leaflet.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Reset and fix Material-UI + Tailwind conflicts */
+* {
+  box-sizing: border-box;
+}
+
+/* Completely remove glass/blur effects */
+.bg-opacity-90,
+.backdrop-blur-md,
+.backdrop-blur-sm,
+.bg-white.bg-opacity-90,
+.backdrop-filter,
+[class*="backdrop-blur"],
+[class*="bg-opacity"] {
+  background-color: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  opacity: 1 !important;
+}
+
+/* Ensure Material-UI components have solid backgrounds */
+.MuiPaper-root {
+  background-color: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.MuiCard-root {
+  background-color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.MuiTextField-root {
+  background-color: transparent !important;
+}
+
+.MuiInputBase-root {
+  background-color: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.MuiInputBase-input {
+  background-color: #ffffff !important;
+}
+
+.MuiSelect-select {
+  background-color: #ffffff !important;
+}
+
+.MuiOutlinedInput-root {
+  background-color: #ffffff !important;
+}
+
+.MuiTableContainer-root {
+  background-color: #ffffff !important;
+}
+
+.MuiTable-root {
+  background-color: #ffffff !important;
+}
+
+.MuiTableCell-root {
+  background-color: #ffffff !important;
+}
+
+.MuiChip-root {
+  color: #ffffff !important;
+}
+
+.MuiButton-root {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Remove glass effects from main containers */
+.flex-1 {
+  background-color: #f5f5f5 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Fix main layout to be scrollable */
+.flex-1.overflow-auto {
+  overflow-y: auto !important;
+  height: 100vh !important;
+  padding-bottom: 2rem !important;
+}
+
+/* Ensure proper scrolling for disposal page */
+.disposal-page-container {
+  min-height: 100vh !important;
+  overflow-y: auto !important;
+  background-color: #f5f5f5 !important;
+  padding: 1rem !important;
+}
+
+/* Container fixes */
+.MuiContainer-root {
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Remove any gradient backgrounds */
+.bg-gradient-to-br {
+  background: #f5f5f5 !important;
+}
+
+/* Leaflet Map Container */
+.leaflet-container {
+  height: 400px;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  z-index: 1;
+  background-color: #ffffff !important;
+}
+
+/* Fix leaflet marker icons */
+.leaflet-marker-icon {
+  margin-left: -12px !important;
+  margin-top: -41px !important;
+}
+
+/* Ensure proper z-index for Material-UI components */
+.MuiDialog-root {
+  z-index: 1300 !important;
+}
+
+.MuiMenu-root {
+  z-index: 1300 !important;
+}
+
+.MuiPopover-root {
+  z-index: 1300 !important;
+}
+
+/* Force remove any remaining glass effects */
+body {
+  background-color: #f5f5f5 !important;
+}
+
+main {
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Custom styles for disposal page clarity */
+.disposal-container {
+  background-color: #ffffff !important;
+  backdrop-filter: none !important;
+}
+
+.disposal-form {
+  background-color: #ffffff !important;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}

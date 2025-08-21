@@ -8,6 +8,7 @@ import HOverviewPage from "./pages_hod/HOverviewPage.jsx";
 import ProductsPage from "./pages_hod/ProductsPage";
 import UsersPage from "./pages/UsersPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import DisposalPage from "./pages/DisposalPage";
 import DashboardLogin from './pages/DashboardLogin';
 import { authService } from './services/authService.js';
 
@@ -98,6 +99,11 @@ function App() {
                         <AnalyticsPage />
                     </ProtectedRoute>
                 } />
+                <Route path='/admin/disposal' element={
+                    <ProtectedRoute adminOnly={true}>
+                        <DisposalPage />
+                    </ProtectedRoute>
+                } />
                 
                 {/* Protected user routes */}
                 <Route path='/HOD' element={
@@ -108,6 +114,16 @@ function App() {
                 <Route path='/HOD/products' element={
                     <ProtectedRoute>
                         <ProductsPage />
+                    </ProtectedRoute>
+                } />
+                <Route path='/HOD/disposal' element={
+                    <ProtectedRoute>
+                        <DisposalPage />
+                    </ProtectedRoute>
+                } />
+                <Route path='/disposal' element={
+                    <ProtectedRoute>
+                        <DisposalPage />
                     </ProtectedRoute>
                 } />
                 

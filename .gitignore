@@ -15,19 +15,21 @@ package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
-# Production builds
-dist/
-*/dist/
-build/
-*/build/
-
-# Environment variables
+# Environment variables (IMPORTANT - Contains sensitive data)
 .env
+*/.env
+**/.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 *.env
+
+# Production builds
+dist/
+*/dist/
+build/
+*/build/
 
 # Cache directories
 .npm
@@ -103,7 +105,10 @@ data/
 **/.DS_Store
 Thumbs.db
 
-
+# ESLint config files (optional - remove this line if you want to keep them)
+.eslintrc.*
+*/.eslintrc.*
+**/.eslintrc.*
 
 # Logs
 logs
@@ -153,6 +158,13 @@ Desktop.ini
 
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
+
+# Backend uploads directory
+backend/uploads/
+
+# Database backups
+*.sql
+*.dump
 
 # Tailwind CSS
 # Only ignore if using Tailwind CSS CDN, otherwise keep the built files
@@ -214,12 +226,11 @@ firebase-debug.*.log
 
 # Local Netlify folder
 .netlify
-Center/README.md
+
+README.md
 Center/public/screenshot-for-readme-1.png
 Center/public/screenshot-for-readme-2.png
 Center/public/screenshot-for-readme-3.png
 WMS4/public/screenshot-for-readme-1.png
 WMS4/public/screenshot-for-readme-2.png
 WMS4/public/screenshot-for-readme-3.png
-README.md
-

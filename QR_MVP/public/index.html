@@ -293,6 +293,207 @@
                 padding: 10px;
             }
         }
+
+        /* Modal Popup Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.8);
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e8f5e8;
+        }
+
+        .modal-title {
+            color: #2d5016;
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #666;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .data-card {
+            background: linear-gradient(135deg, #f8fffe 0%, #e8f5e8 100%);
+            border: 2px solid #4caf50;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .data-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #4caf50;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .data-label {
+            font-weight: 600;
+            color: #2d5016;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .data-value {
+            color: #333;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-progress {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .recyclable-yes {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .recyclable-no {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 150px;
+            justify-content: center;
+        }
+
+        .pdf-btn {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        .pdf-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+        }
+
+        .close-modal-btn {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .close-modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+        }
+
+        .scan-again-btn {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .scan-again-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -505,15 +706,266 @@
 
                 if (code) {
                     const scannedData = code.data;
+                    try {
+                        const parsedData = JSON.parse(scannedData);
+                        showQRDataModal(parsedData);
+                    } catch (e) {
+                        // If it's not JSON, show as plain text
+                        showQRDataModal({ rawData: scannedData });
+                    }
+                    return; // Stop scanning after successful scan
+                } else {
                     outputElement.innerHTML = `
-                        <h3><i class="fas fa-check-circle"></i> QR Code Detected</h3>
-                        <p><strong>E-Waste Data:</strong></p>
-                        <pre style="text-align: left; background: white; padding: 15px; border-radius: 8px; margin-top: 10px;">${scannedData}</pre>
+                        <h3><i class="fas fa-search"></i> Scanning...</h3>
+                        <p>Position the QR code within the green frame to scan e-waste data.</p>
+                    `;
+                }
+            }
+            requestAnimationFrame(scanQRCode);
+        }
+
+        function showQRDataModal(data) {
+            // Stop the camera
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+
+            // Create modal HTML
+            const modalHTML = `
+                <div class="modal-overlay" id="qrModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="modal-title">
+                                <i class="fas fa-info-circle"></i>
+                                E-Waste Information
+                            </div>
+                            <button class="close-btn" onclick="closeModal()">&times;</button>
+                        </div>
+                        
+                        <div class="data-card">
+                            ${formatQRData(data)}
+                        </div>
+                        
+                        <div class="modal-actions">
+                            <button class="action-btn pdf-btn" onclick="generatePDFReport()">
+                                <i class="fas fa-file-pdf"></i>
+                                Save Report as PDF
+                            </button>
+                            <button class="action-btn scan-again-btn" onclick="scanAgain()">
+                                <i class="fas fa-qrcode"></i>
+                                Scan Another Code
+                            </button>
+                            <button class="action-btn close-modal-btn" onclick="closeModal()">
+                                <i class="fas fa-times"></i>
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add modal to body
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // Store data for PDF generation
+            window.currentQRData = data;
+            
+            // Show modal with animation
+            setTimeout(() => {
+                document.getElementById('qrModal').classList.add('show');
+            }, 10);
+        }
+
+        function formatQRData(data) {
+            if (data.rawData) {
+                return `
+                    <div class="data-item">
+                        <div class="data-label"><i class="fas fa-file-alt"></i> Raw Data</div>
+                        <div class="data-value">${data.rawData}</div>
+                    </div>
+                `;
+            }
+
+            let html = '<div class="data-grid">';
+            
+            // Format each field with appropriate icons and styling
+            const fieldMap = {
+                wasteType: { icon: 'fas fa-laptop', label: 'E-Waste Type' },
+                sourceLocation: { icon: 'fas fa-map-marker-alt', label: 'Source Location' },
+                generatedDate: { icon: 'fas fa-calendar', label: 'Generated Date' },
+                weightKg: { icon: 'fas fa-weight', label: 'Weight (kg)' },
+                recyclable: { icon: 'fas fa-recycle', label: 'Recyclable' },
+                disposalMethod: { icon: 'fas fa-trash-alt', label: 'Disposal Method' },
+                costPerKg: { icon: 'fas fa-dollar-sign', label: 'Cost per kg' },
+                disposalStatus: { icon: 'fas fa-check-circle', label: 'Disposal Status' },
+                totalCost: { icon: 'fas fa-calculator', label: 'Total Cost' }
+            };
+
+            for (const [key, value] of Object.entries(data)) {
+                if (value !== undefined && value !== null && value !== '') {
+                    const field = fieldMap[key] || { icon: 'fas fa-info', label: key };
+                    let displayValue = value;
+                    let additionalClass = '';
+
+                    // Special formatting for certain fields
+                    if (key === 'recyclable') {
+                        displayValue = value === 'true' || value === true ? 'Yes' : 'No';
+                        additionalClass = value === 'true' || value === true ? 'recyclable-yes' : 'recyclable-no';
+                    } else if (key === 'disposalStatus') {
+                        additionalClass = `status-${value.toLowerCase().replace(' ', '')}`;
+                    } else if (key === 'costPerKg' || key === 'totalCost') {
+                        displayValue = `$${parseFloat(value).toFixed(2)}`;
+                    } else if (key === 'weightKg') {
+                        displayValue = `${value} kg`;
+                    }
+
+                    html += `
+                        <div class="data-item">
+                            <div class="data-label">
+                                <i class="${field.icon}"></i>
+                                ${field.label}
+                            </div>
+                            <div class="data-value ${additionalClass}">
+                                ${key === 'disposalStatus' ? `<span class="status-badge ${additionalClass}">${displayValue}</span>` : displayValue}
+                            </div>
+                        </div>
                     `;
                 }
             }
 
-            requestAnimationFrame(scanQRCode);
+            html += '</div>';
+            return html;
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('qrModal');
+            if (modal) {
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    modal.remove();
+                }, 300);
+            }
+        }
+
+        function scanAgain() {
+            closeModal();
+            // Restart scanning
+            startScanning();
+        }
+
+        function generatePDFReport() {
+            if (!window.currentQRData) {
+                alert('No data available for PDF generation');
+                return;
+            }
+
+            // Create a simple HTML report for PDF generation
+            const reportHTML = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>E-Waste Report</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+                        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #4caf50; padding-bottom: 20px; }
+                        .header h1 { color: #2d5016; margin: 0; }
+                        .header p { color: #666; margin: 5px 0 0 0; }
+                        .data-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        .data-table th, .data-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+                        .data-table th { background-color: #f8f9fa; font-weight: bold; color: #2d5016; }
+                        .data-table tr:hover { background-color: #f5f5f5; }
+                        .footer { margin-top: 40px; text-align: center; color: #666; font-size: 12px; }
+                        .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+                        .status-pending { background: #fff3cd; color: #856404; }
+                        .status-inprogress { background: #d1ecf1; color: #0c5460; }
+                        .status-completed { background: #d4edda; color: #155724; }
+                        .recyclable-yes { color: #155724; font-weight: bold; }
+                        .recyclable-no { color: #721c24; font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>🌱 e-Shunya E-Waste Report</h1>
+                        <p>Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
+                    </div>
+                    
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Property</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${generatePDFTableRows(window.currentQRData)}
+                        </tbody>
+                    </table>
+                    
+                    <div class="footer">
+                        <p>This report was generated by e-Shunya E-Waste Management System</p>
+                        <p>For more information, visit our environmental sustainability portal</p>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            // Create a new window for printing
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(reportHTML);
+            printWindow.document.close();
+            
+            // Wait for content to load then print
+            printWindow.onload = function() {
+                printWindow.print();
+                // Close the window after printing (optional)
+                printWindow.onafterprint = function() {
+                    printWindow.close();
+                };
+            };
+        }
+
+        function generatePDFTableRows(data) {
+            if (data.rawData) {
+                return `<tr><td>Raw Data</td><td>${data.rawData}</td></tr>`;
+            }
+
+            const fieldLabels = {
+                wasteType: 'E-Waste Type',
+                sourceLocation: 'Source Location',
+                generatedDate: 'Generated Date',
+                weightKg: 'Weight (kg)',
+                recyclable: 'Recyclable',
+                disposalMethod: 'Disposal Method',
+                costPerKg: 'Cost per kg',
+                disposalStatus: 'Disposal Status',
+                totalCost: 'Total Cost'
+            };
+
+            let rows = '';
+            for (const [key, value] of Object.entries(data)) {
+                if (value !== undefined && value !== null && value !== '') {
+                    const label = fieldLabels[key] || key;
+                    let displayValue = value;
+                    let additionalClass = '';
+
+                    // Special formatting for certain fields
+                    if (key === 'recyclable') {
+                        displayValue = value === 'true' || value === true ? 'Yes' : 'No';
+                        additionalClass = value === 'true' || value === true ? 'recyclable-yes' : 'recyclable-no';
+                    } else if (key === 'disposalStatus') {
+                        additionalClass = `status-${value.toLowerCase().replace(' ', '')}`;
+                        displayValue = `<span class="status-badge ${additionalClass}">${value}</span>`;
+                    } else if (key === 'costPerKg' || key === 'totalCost') {
+                        displayValue = `$${parseFloat(value).toFixed(2)}`;
+                    } else if (key === 'weightKg') {
+                        displayValue = `${value} kg`;
+                    }
+
+                    rows += `<tr><td>${label}</td><td class="${additionalClass}">${displayValue}</td></tr>`;
+                }
+            }
+            return rows;
         }
 
         function generateQRCode() {

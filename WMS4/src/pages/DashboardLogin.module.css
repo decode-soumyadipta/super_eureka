@@ -64,16 +64,36 @@
 }
 
 .username {
-  flex-grow: 1;
-  background: transparent;
   border: none;
-  color: white;
   outline: none;
+  background: transparent;
+  color: white;
+  width: 100%;
+  padding: 8px;
 }
 
 .username::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Fix dropdown styling to make options visible */
+.username select {
   color: white;
-  text-transform: uppercase;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.username option {
+  background-color: #1a1a1a;
+  color: white;
+  padding: 8px;
+}
+
+.username option:hover {
+  background-color: #333;
+}
+
+.username option:selected {
+  background-color: #4a5568;
 }
 
 .rectangle2 {

@@ -1,33 +1,45 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { motion } from "framer-motion";
+import {
+	CartesianGrid,
+	Line,
+	LineChart,
+	ResponsiveContainer,
+	Tooltip,
+	XAxis,
+	YAxis,
+} from "recharts";
 
-const salesData = [
-	{ name: "Jan", sales: 1000 },
-	{ name: "Feb", sales: 3800 },
-	{ name: "Mar", sales: 5100 },
-	{ name: "Apr", sales: 4600 },
-	{ name: "May", sales: 5400 },
-	{ name: "Jun", sales: 7200 },
-	{ name: "Jul", sales: 6100 },
-	{ name: "Aug", sales: 5900 },
-	{ name: "Sep", sales: 6800 },
-	{ name: "Nov", sales: 6300 },
-	{ name: "Dec", sales: 7100 },
+// Sample data - Will be replaced by real data from props
+const sampleData = [
+	{ name: "Jan", sales: 450 },
+	{ name: "Feb", sales: 500 },
+	{ name: "Mar", sales: 650 },
+	{ name: "Apr", sales: 700 },
+	{ name: "May", sales: 690 },
+	{ name: "Jun", sales: 800 },
 ];
 
-const SalesOverviewChart = () => {
+const SalesOverviewChart = ({ monthlyTrend = [] }) => {
+	// Process monthly trend data from API or use sample data if none provided
+	const chartData = monthlyTrend && monthlyTrend.length > 0
+		? monthlyTrend.map(item => ({
+			name: new Date(item.month + '-01').toLocaleString('default', { month: 'short' }),
+			devices: item.count
+		}))
+		: sampleData;
+
 	return (
 		<motion.div
-			className='bg-white bg-opacity-90 backdrop-blur-md shadow-lg rounded-xl p-6 border border-primary-200'
+			className='bg-white bg-opacity-90 backdrop-blur-md shadow-lg rounded-xl p-6 border border-primary-200 h-full'
 			initial={{ opacity: 0, y: 20 }}
 			animate={{ opacity: 1, y: 0 }}
 			transition={{ delay: 0.2 }}
 		>
-			<h2 className='text-lg font-medium mb-4 text-primary-800'>Waste Overview</h2>
+			<h2 className='text-lg font-medium mb-4 text-primary-800'>Device Registration Trend</h2>
 
 			<div className='h-80'>
 				<ResponsiveContainer width={"100%"} height={"100%"}>
-					<LineChart data={salesData}>
+					<LineChart data={chartData}>
 						<CartesianGrid strokeDasharray='3 3' stroke='#d1ebd1' />
 						<XAxis dataKey={"name"} stroke='#757575' />
 						<YAxis stroke='#757575' />
@@ -41,11 +53,10 @@ const SalesOverviewChart = () => {
 						/>
 						<Line
 							type='monotone'
-							dataKey='sales'
+							dataKey='devices'
 							stroke='#4caf50'
-							strokeWidth={3}
-							dot={{ fill: "#4caf50", strokeWidth: 2, r: 6 }}
-							activeDot={{ r: 8, strokeWidth: 2 }}
+							activeDot={{ r: 8 }}
+							name="Device Registrations"
 						/>
 					</LineChart>
 				</ResponsiveContainer>

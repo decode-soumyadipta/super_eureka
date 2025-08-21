@@ -3,80 +3,449 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code Scanner and Generator</title>
+    <title>e-Shunya</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f0f9f0 0%, #e8f5e8 100%);
+            min-height: 100vh;
+            color: #2d5016;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2d5016 0%, #4a7c59 100%);
+            color: white;
+            padding: 30px 0;
+            text-align: center;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(45, 80, 22, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .header .icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #90EE90;
+        }
+
+        .mode-switcher {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, #2d5016 0%, #4a7c59 100%);
+            box-shadow: 0 8px 25px rgba(45, 80, 22, 0.4);
+        }
+
+        .content-area {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .scan-section {
+            text-align: center;
+        }
+
+        .video-container {
+            position: relative;
+            max-width: 500px;
+            margin: 0 auto 20px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
         #video {
             width: 100%;
             height: auto;
-            border: 1px solid black;
+            display: block;
         }
-        #output {
+
+        .video-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border: 3px solid #4caf50;
+            border-radius: 15px;
+            pointer-events: none;
+        }
+
+        .scan-result {
+            background: linear-gradient(135deg, #e8f5e8 0%, #f0f9f0 100%);
+            border: 2px solid #4caf50;
+            border-radius: 15px;
+            padding: 20px;
             margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            display: inline-block;
-            background-color: #f4f4f4;
-            max-width: 80%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
             word-wrap: break-word;
         }
-        #qr-container {
-            display: none;
-            margin-top: 20px;
+
+        .scan-result h3 {
+            color: #2d5016;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
         }
-        #qr-code {
-            margin-top: 20px;
-        }
+
         .form-container {
-            margin-top: 20px;
+            max-width: 600px;
+            margin: 0 auto;
         }
-        .switch-button {
-            padding: 10px 20px;
-            margin: 10px;
-            cursor: pointer;
-            background-color: #007BFF;
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            color: #2d5016;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4caf50;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
             color: white;
             border: none;
-            border-radius: 5px;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
-        .download-button {
-            padding: 10px 20px;
-            margin-top: 20px;
-            background-color: #28a745;
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+        }
+
+        .qr-display {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .qr-code-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            display: inline-block;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #2d5016 0%, #4a7c59 100%);
             color: white;
             border: none;
-            border-radius: 5px;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(45, 80, 22, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 auto;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(45, 80, 22, 0.4);
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .mode-switcher {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 10px;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>QR Code Scanner and Generator</h1>
-
-    <!-- Buttons to switch between modes -->
-    <div>
-        <button class="switch-button" onclick="switchToScanMode()">Scan QR Code</button>
-        <button class="switch-button" onclick="switchToGenerateMode()">Generate QR Code</button>
-    </div>
-
-    <!-- QR Code Scanning Mode -->
-    <div id="scan-mode">
-        <video id="video" autoplay></video>
-        <div id="output">Scan a QR code to display the data.</div>
-    </div>
-
-    <!-- QR Code Generation Mode -->
-    <div id="qr-container">
-        <div class="form-container">
-            <button class="switch-button" onclick="generateQRCode()">Generate QR Code</button>
+    <div class="container">
+        <!-- Header Section -->
+        <div class="header">
+            <div class="icon">
+                <i class="fas fa-recycle"></i>
+            </div>
+            <h1>e-Shunya</h1>
+            <p>QR based E-Waste Tracking System</p>
         </div>
-        <div id="qr-code"></div>
-        <button id="download-btn" class="download-button" style="display: none;" onclick="downloadQRCode()">Download QR Code</button>
+
+        <!-- Mode Switcher -->
+        <div class="mode-switcher">
+            <button class="mode-btn active" id="scan-btn" onclick="switchToScanMode()">
+                <i class="fas fa-qrcode"></i>
+                Scan QR Code
+            </button>
+            <button class="mode-btn" id="generate-btn" onclick="switchToGenerateMode()">
+                <i class="fas fa-plus-circle"></i>
+                Generate QR Code
+            </button>
+        </div>
+
+        <!-- QR Code Scanning Mode -->
+        <div id="scan-mode" class="content-area">
+            <div class="scan-section">
+                <h2 style="margin-bottom: 20px; color: #2d5016;">
+                    <i class="fas fa-camera"></i> Scan E-Waste QR Code
+                </h2>
+                <div class="video-container">
+                    <video id="video" autoplay></video>
+                    <div class="video-overlay"></div>
+                </div>
+                <div id="output" class="scan-result">
+                    <h3><i class="fas fa-info-circle"></i> Scan Status</h3>
+                    <p>Position the QR code within the green frame to scan e-waste data.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR Code Generation Mode -->
+        <div id="qr-container" class="content-area hidden">
+            <h2 style="margin-bottom: 30px; color: #2d5016; text-align: center;">
+                <i class="fas fa-plus-circle"></i> Generate E-Waste QR Code
+            </h2>
+            
+            <div class="form-container">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="wasteType">
+                            <i class="fas fa-laptop"></i> E-Waste Type
+                        </label>
+                        <select id="wasteType">
+                            <option value="">Select waste type</option>
+                            <option value="Computer">Computer/Laptop</option>
+                            <option value="Mobile Phone">Mobile Phone</option>
+                            <option value="Television">Television</option>
+                            <option value="Refrigerator">Refrigerator</option>
+                            <option value="Washing Machine">Washing Machine</option>
+                            <option value="Air Conditioner">Air Conditioner</option>
+                            <option value="Printer">Printer</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sourceLocation">
+                            <i class="fas fa-map-marker-alt"></i> Source Location
+                        </label>
+                        <input type="text" id="sourceLocation" placeholder="e.g., Building A, Floor 3">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="generatedDate">
+                            <i class="fas fa-calendar"></i> Generated Date
+                        </label>
+                        <input type="date" id="generatedDate">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="weightKg">
+                            <i class="fas fa-weight"></i> Weight (kg)
+                        </label>
+                        <input type="number" id="weightKg" placeholder="0.0" step="0.1" min="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="recyclable">
+                            <i class="fas fa-recycle"></i> Recyclable
+                        </label>
+                        <select id="recyclable">
+                            <option value="">Select recyclability</option>
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="disposalMethod">
+                            <i class="fas fa-trash-alt"></i> Disposal Method
+                        </label>
+                        <select id="disposalMethod">
+                            <option value="">Select disposal method</option>
+                            <option value="Recycling">Recycling</option>
+                            <option value="Refurbishment">Refurbishment</option>
+                            <option value="Safe Disposal">Safe Disposal</option>
+                            <option value="Donation">Donation</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="costPerKg">
+                            <i class="fas fa-dollar-sign"></i> Cost per kg
+                        </label>
+                        <input type="number" id="costPerKg" placeholder="0.00" step="0.01" min="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="disposalStatus">
+                            <i class="fas fa-check-circle"></i> Disposal Status
+                        </label>
+                        <select id="disposalStatus">
+                            <option value="">Select status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="generate-btn" onclick="generateQRCode()">
+                    <i class="fas fa-qrcode"></i>
+                    Generate QR Code
+                </button>
+
+                <div id="status-message"></div>
+
+                <div class="qr-display">
+                    <div id="qr-code"></div>
+                    <button id="download-btn" class="download-btn hidden" onclick="downloadQRCode()">
+                        <i class="fas fa-download"></i>
+                        Download QR Code
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>&copy; 2025 EcoWaste Pro. Professional E-Waste Management System.</p>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
@@ -87,10 +456,22 @@
         const qrContainer = document.getElementById('qr-container');
         const qrCodeElement = document.getElementById('qr-code');
         const downloadButton = document.getElementById('download-btn');
+        const statusMessage = document.getElementById('status-message');
         let stream;
         let generatedQRCode;
 
-        // Access the device camera for scanning QR code
+        // Set today's date as default
+        document.getElementById('generatedDate').valueAsDate = new Date();
+
+        function showStatus(message, isSuccess = true) {
+            statusMessage.className = `status-message ${isSuccess ? 'status-success' : 'status-error'}`;
+            statusMessage.textContent = message;
+            statusMessage.classList.remove('hidden');
+            setTimeout(() => {
+                statusMessage.classList.add('hidden');
+            }, 5000);
+        }
+
         function startScanning() {
             const constraints = {
                 video: { facingMode: 'environment' }
@@ -105,11 +486,13 @@
                 })
                 .catch((err) => {
                     console.error('Error accessing camera:', err);
-                    outputElement.textContent = 'Could not access the camera.';
+                    outputElement.innerHTML = `
+                        <h3><i class="fas fa-exclamation-triangle"></i> Camera Access Error</h3>
+                        <p>Could not access the camera. Please check permissions.</p>
+                    `;
                 });
         }
 
-        // Scan the QR code
         function scanQRCode() {
             if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
                 const canvas = document.createElement('canvas');
@@ -122,39 +505,70 @@
 
                 if (code) {
                     const scannedData = code.data;
-                    outputElement.textContent = `QR Code Data: ${scannedData}`;
+                    outputElement.innerHTML = `
+                        <h3><i class="fas fa-check-circle"></i> QR Code Detected</h3>
+                        <p><strong>E-Waste Data:</strong></p>
+                        <pre style="text-align: left; background: white; padding: 15px; border-radius: 8px; margin-top: 10px;">${scannedData}</pre>
+                    `;
                 }
             }
 
             requestAnimationFrame(scanQRCode);
         }
 
-        // Generate QR code from user input
         function generateQRCode() {
-            const wasteType = prompt("Enter the type of e-waste:");
-            const sourceLocation = prompt("Enter the source location:");
-            const generatedDate = prompt("Enter the generated date:");
-            const weightKg = prompt("Enter the weight in kg:");
-            const recyclable = prompt("Is it recyclable? (true/false):");
-            const disposalMethod = prompt("Enter the disposal method:");
-            const costPerKg = prompt("Enter the cost per kg:");
-            const disposalStatus = prompt("Enter the disposal status:");
+            const wasteType = document.getElementById('wasteType').value;
+            const sourceLocation = document.getElementById('sourceLocation').value;
+            const generatedDate = document.getElementById('generatedDate').value;
+            const weightKg = document.getElementById('weightKg').value;
+            const recyclable = document.getElementById('recyclable').value;
+            const disposalMethod = document.getElementById('disposalMethod').value;
+            const costPerKg = document.getElementById('costPerKg').value;
+            const disposalStatus = document.getElementById('disposalStatus').value;
+
+            // Validation
+            if (!wasteType || !sourceLocation || !generatedDate || !weightKg || !recyclable || !disposalMethod || !costPerKg || !disposalStatus) {
+                showStatus('Please fill in all fields before generating QR code.', false);
+                return;
+            }
 
             const qrData = `Waste Type: ${wasteType}\nSource Location: ${sourceLocation}\nGenerated Date: ${generatedDate}\nWeight (kg): ${weightKg}\nRecyclable: ${recyclable}\nDisposal Method: ${disposalMethod}\nCost per kg: ${costPerKg}\nDisposal Status: ${disposalStatus}`;
 
-            QRCode.toCanvas(qrCodeElement, qrData, function (error) {
-                if (error) console.error(error);
+            // Clear previous QR code
+            qrCodeElement.innerHTML = '';
+
+            QRCode.toCanvas(qrCodeElement, qrData, { width: 256, margin: 2 }, function (error) {
+                if (error) {
+                    console.error(error);
+                    showStatus('Error generating QR code.', false);
+                    return;
+                }
                 console.log('QR Code generated!');
+                
+                // Add container styling
+                const canvas = qrCodeElement.querySelector('canvas');
+                if (canvas) {
+                    canvas.style.border = '1px solid #ddd';
+                    canvas.style.borderRadius = '10px';
+                    const container = document.createElement('div');
+                    container.className = 'qr-code-container';
+                    canvas.parentNode.insertBefore(container, canvas);
+                    container.appendChild(canvas);
+                }
             });
 
             QRCode.toDataURL(qrData, function (err, url) {
-                if (err) console.error(err);
+                if (err) {
+                    console.error(err);
+                    showStatus('Error generating QR code for download.', false);
+                    return;
+                }
                 generatedQRCode = url;
-                downloadButton.style.display = 'block'; // Show download button
+                downloadButton.classList.remove('hidden');
             });
 
-            // Send data to server to append to CSV file
-            fetch('http://localhost:3000/add-data', { // Ensure the correct URL
+            // Send data to server
+            fetch('/add-data', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -173,35 +587,43 @@
             .then(response => response.text())
             .then(data => {
                 console.log(data);
+                showStatus('QR code generated and data saved successfully!', true);
             })
             .catch(error => {
                 console.error('Error:', error);
+                showStatus('QR code generated but failed to save data to server.', false);
             });
         }
 
-        // Download the generated QR code as PNG
         function downloadQRCode() {
             const link = document.createElement('a');
             link.href = generatedQRCode;
-            link.download = 'qrcode.png'; // Default to PNG format
+            link.download = `ewaste-qr-${Date.now()}.png`;
             link.click();
+            showStatus('QR code downloaded successfully!', true);
         }
 
-        // Switch to scan mode
         function switchToScanMode() {
-            qrContainer.style.display = 'none';
-            document.getElementById('scan-mode').style.display = 'block';
+            // Update button states
+            document.getElementById('scan-btn').classList.add('active');
+            document.getElementById('generate-btn').classList.remove('active');
+            
+            qrContainer.classList.add('hidden');
+            document.getElementById('scan-mode').classList.remove('hidden');
             startScanning();
         }
 
-        // Switch to generate mode
         function switchToGenerateMode() {
+            // Update button states
+            document.getElementById('generate-btn').classList.add('active');
+            document.getElementById('scan-btn').classList.remove('active');
+            
             if (stream) {
                 let tracks = stream.getTracks();
-                tracks.forEach(track => track.stop()); // Stop the camera
+                tracks.forEach(track => track.stop());
             }
-            document.getElementById('scan-mode').style.display = 'none';
-            qrContainer.style.display = 'block';
+            document.getElementById('scan-mode').classList.add('hidden');
+            qrContainer.classList.remove('hidden');
         }
 
         // Initialize with Scan Mode

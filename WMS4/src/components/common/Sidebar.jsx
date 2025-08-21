@@ -7,20 +7,20 @@ const SIDEBAR_ITEMS = [
 	{
 		name: "Overview",
 		icon: BarChart2,
-		color: "#6366f1",
+		color: "#4caf50",
 		href: "/admin",
 	},
-	{ name: "Repair Centers", icon: Users, color: "#EC4899", href: "/admin/users" },
+	{ name: "Repair Centers", icon: Users, color: "#45a049", href: "/admin/users" },
 	{ 
 		name: "QR", 
 		icon: QrCode, 
-		color: "#3B82F6", 
+		color: "#388e3c", 
 		href: "http://localhost:3000"
 	},
 	{ 
 		name: "Analytics", 
 		icon: TrendingUp, 
-		color: "#3B82F6", 
+		color: "#2d5016", 
 		href: "http://127.0.0.1:8050/"
 	},
 ];
@@ -35,12 +35,12 @@ const Sidebar = () => {
 			}`}
 			animate={{ width: isSidebarOpen ? 256 : 80 }}
 		>
-			<div className='h-full bg-gray-800 bg-opacity-50 backdrop-blur-md p-4 flex flex-col border-r border-gray-700'>
+			<div className='h-full bg-white bg-opacity-90 backdrop-blur-md p-4 flex flex-col border-r border-primary-200 shadow-lg'>
 				<motion.button
 					whileHover={{ scale: 1.1 }}
 					whileTap={{ scale: 0.9 }}
 					onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-					className='p-2 rounded-full hover:bg-gray-700 transition-colors max-w-fit'
+					className='p-2 rounded-full hover:bg-primary-100 transition-colors max-w-fit text-primary-700'
 				>
 					<Menu size={24} />
 				</motion.button>
@@ -48,7 +48,7 @@ const Sidebar = () => {
 				<nav className='mt-8 flex-grow'>
 					{SIDEBAR_ITEMS.map((item) => (
 						<Link key={item.href} to={item.href}>
-							<motion.div className='flex items-center p-4 text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors mb-2'>
+							<motion.div className='flex items-center p-4 text-sm font-medium rounded-lg hover:bg-primary-50 transition-colors mb-2 text-secondary-800'>
 								<item.icon size={20} style={{ color: item.color, minWidth: "20px" }} />
 								<AnimatePresence>
 									{isSidebarOpen && (

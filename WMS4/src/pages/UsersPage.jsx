@@ -32,16 +32,16 @@ const UsersPage = () => {
 						name='Total Repair'
 						icon={UsersIcon}
 						value={userStats.totalUsers.toLocaleString()}
-						color='#6366F1'
+						color='#4caf50'
 					/>
-					<StatCard name='Approved Repair' icon={UserPlus} value={userStats.newUsersToday} color='#10B981' />
+					<StatCard name='Approved Repair' icon={UserPlus} value={userStats.newUsersToday} color='#45a049' />
 					<StatCard
 						name='Hold Repair'
 						icon={UserCheck}
 						value={userStats.activeUsers.toLocaleString()}
-						color='#F59E0B'
+						color='#388e3c'
 					/>
-					<StatCard name='Pending Repair' icon={UserX} value={userStats.churnRate} color='#EF4444' />
+					<StatCard name='Pending Repair' icon={UserX} value={userStats.churnRate} color='#2d5016' />
 				</motion.div>
 
 				<UsersTable />

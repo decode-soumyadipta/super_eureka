@@ -9,17 +9,17 @@ const categoryData = [
 	{ name: "Sports & Outdoors", value: 1900 },
 ];
 
-const COLORS = ["#6366F1", "#8B5CF6", "#EC4899", "#10B981", "#F59E0B"];
+const COLORS = ["#4caf50", "#45a049", "#388e3c", "#2d5016", "#75b575"];
 
 const CategoryDistributionChart = () => {
 	return (
 		<motion.div
-			className='bg-gray-800 bg-opacity-50 backdrop-blur-md shadow-lg rounded-xl p-6 border border-gray-700'
+			className='bg-white bg-opacity-90 backdrop-blur-md shadow-lg rounded-xl p-6 border border-primary-200'
 			initial={{ opacity: 0, y: 20 }}
 			animate={{ opacity: 1, y: 0 }}
 			transition={{ delay: 0.3 }}
 		>
-			<h2 className='text-lg font-medium mb-4 text-gray-100'>Waste Distribution</h2>
+			<h2 className='text-lg font-medium mb-4 text-primary-800'>Waste Distribution</h2>
 			<div className='h-80'>
 				<ResponsiveContainer width={"100%"} height={"100%"}>
 					<PieChart>
@@ -39,10 +39,11 @@ const CategoryDistributionChart = () => {
 						</Pie>
 						<Tooltip
 							contentStyle={{
-								backgroundColor: "rgba(31, 41, 55, 0.8)",
-								borderColor: "#4B5563",
+								backgroundColor: "rgba(255, 255, 255, 0.95)",
+								borderColor: "#4caf50",
+								color: "#2d5016"
 							}}
-							itemStyle={{ color: "#E5E7EB" }}
+							itemStyle={{ color: "#2d5016" }}
 						/>
 						<Legend />
 					</PieChart>

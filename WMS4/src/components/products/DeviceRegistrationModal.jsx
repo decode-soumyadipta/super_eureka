@@ -31,7 +31,11 @@ const DeviceRegistrationModal = ({ isOpen, onClose, onDeviceRegistered }) => {
     const deviceTypes = [
         "Laptop", "Desktop", "Monitor", "Printer", "Scanner", 
         "Projector", "Router", "Switch", "Server", "Tablet",
-        "Smartphone", "Camera", "Other"
+        "Smartphone", "Camera", "Mouse", "Keyboard", "Headphones",
+        "Speakers", "Webcam", "Hard Drive", "SSD", "RAM",
+        "Graphics Card", "Motherboard", "Power Supply", "UPS",
+        "External Drive", "USB Drive", "CD/DVD Drive", "Modem",
+        "Network Card", "Sound Card", "Cables", "Adapters", "Other"
     ];
 
     const conditionStatuses = [
@@ -181,15 +185,61 @@ const DeviceRegistrationModal = ({ isOpen, onClose, onDeviceRegistered }) => {
                                         link.href = qrCodeData.qr_code_url;
                                         link.click();
                                     }}
-                                    className="flex-1 bg-primary-500 text-white py-2 px-4 rounded-lg hover:bg-primary-600"
+                                    ref={(el) => {
+                                        if (el) {
+                                            el.style.setProperty('background-color', '#16A34A', 'important');
+                                            el.style.setProperty('color', '#FFFFFF', 'important');
+                                            el.style.setProperty('border', '2px solid #16A34A', 'important');
+                                            el.style.setProperty('padding', '12px 20px', 'important');
+                                            el.style.setProperty('border-radius', '8px', 'important');
+                                            el.style.setProperty('font-weight', '600', 'important');
+                                            el.style.setProperty('font-size', '14px', 'important');
+                                            el.style.setProperty('box-shadow', '0 4px 12px rgba(22, 163, 74, 0.3)', 'important');
+                                            el.style.setProperty('cursor', 'pointer', 'important');
+                                        }
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.setProperty('background-color', '#15803D', 'important');
+                                        e.target.style.setProperty('border-color', '#15803D', 'important');
+                                        e.target.style.setProperty('transform', 'translateY(-2px)', 'important');
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.setProperty('background-color', '#16A34A', 'important');
+                                        e.target.style.setProperty('border-color', '#16A34A', 'important');
+                                        e.target.style.setProperty('transform', 'translateY(0px)', 'important');
+                                    }}
+                                    className="flex-1"
                                 >
-                                    Download QR Code
+                                    <span style={{color: '#FFFFFF !important'}}>Download QR Code</span>
                                 </button>
                                 <button
                                     onClick={handleClose}
-                                    className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600"
+                                    ref={(el) => {
+                                        if (el) {
+                                            el.style.setProperty('background-color', '#DC2626', 'important');
+                                            el.style.setProperty('color', '#FFFFFF', 'important');
+                                            el.style.setProperty('border', '2px solid #DC2626', 'important');
+                                            el.style.setProperty('padding', '12px 20px', 'important');
+                                            el.style.setProperty('border-radius', '8px', 'important');
+                                            el.style.setProperty('font-weight', '600', 'important');
+                                            el.style.setProperty('font-size', '14px', 'important');
+                                            el.style.setProperty('box-shadow', '0 4px 12px rgba(220, 38, 38, 0.3)', 'important');
+                                            el.style.setProperty('cursor', 'pointer', 'important');
+                                        }
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.setProperty('background-color', '#B91C1C', 'important');
+                                        e.target.style.setProperty('border-color', '#B91C1C', 'important');
+                                        e.target.style.setProperty('transform', 'translateY(-2px)', 'important');
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.setProperty('background-color', '#DC2626', 'important');
+                                        e.target.style.setProperty('border-color', '#DC2626', 'important');
+                                        e.target.style.setProperty('transform', 'translateY(0px)', 'important');
+                                    }}
+                                    className="flex-1"
                                 >
-                                    Close
+                                    <span style={{color: '#FFFFFF !important'}}>Close</span>
                                 </button>
                             </div>
                         </div>

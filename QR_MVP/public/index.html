@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Scanner and Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        #video {
+            width: 100%;
+            height: auto;
+            border: 1px solid black;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            display: inline-block;
+            background-color: #f4f4f4;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        #qr-container {
+            display: none;
+            margin-top: 20px;
+        }
+        #qr-code {
+            margin-top: 20px;
+        }
+        .form-container {
+            margin-top: 20px;
+        }
+        .switch-button {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        .download-button {
+            padding: 10px 20px;
+            margin-top: 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>QR Code Scanner and Generator</h1>
+
+    <!-- Buttons to switch between modes -->
+    <div>
+        <button class="switch-button" onclick="switchToScanMode()">Scan QR Code</button>
+        <button class="switch-button" onclick="switchToGenerateMode()">Generate QR Code</button>
+    </div>
+
+    <!-- QR Code Scanning Mode -->
+    <div id="scan-mode">
+        <video id="video" autoplay></video>
+        <div id="output">Scan a QR code to display the data.</div>
+    </div>
+
+    <!-- QR Code Generation Mode -->
+    <div id="qr-container">
+        <div class="form-container">
+            <button class="switch-button" onclick="generateQRCode()">Generate QR Code</button>
+        </div>
+        <div id="qr-code"></div>
+        <button id="download-btn" class="download-button" style="display: none;" onclick="downloadQRCode()">Download QR Code</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <script>
+        const videoElement = document.getElementById('video');
+        const outputElement = document.getElementById('output');
+        const qrContainer = document.getElementById('qr-container');
+        const qrCodeElement = document.getElementById('qr-code');
+        const downloadButton = document.getElementById('download-btn');
+        let stream;
+        let generatedQRCode;
+
+        // Access the device camera for scanning QR code
+        function startScanning() {
+            const constraints = {
+                video: { facingMode: 'environment' }
+            };
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then((s) => {
+                    stream = s;
+                    videoElement.srcObject = stream;
+                    videoElement.setAttribute("playsinline", true);
+                    videoElement.play();
+                    requestAnimationFrame(scanQRCode);
+                })
+                .catch((err) => {
+                    console.error('Error accessing camera:', err);
+                    outputElement.textContent = 'Could not access the camera.';
+                });
+        }
+
+        // Scan the QR code
+        function scanQRCode() {
+            if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = videoElement.videoHeight;
+                canvas.width = videoElement.videoWidth;
+                context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, canvas.width, canvas.height);
+
+                if (code) {
+                    const scannedData = code.data;
+                    outputElement.textContent = `QR Code Data: ${scannedData}`;
+                }
+            }
+
+            requestAnimationFrame(scanQRCode);
+        }
+
+        // Generate QR code from user input
+        function generateQRCode() {
+            const wasteType = prompt("Enter the type of e-waste:");
+            const sourceLocation = prompt("Enter the source location:");
+            const generatedDate = prompt("Enter the generated date:");
+            const weightKg = prompt("Enter the weight in kg:");
+            const recyclable = prompt("Is it recyclable? (true/false):");
+            const disposalMethod = prompt("Enter the disposal method:");
+            const costPerKg = prompt("Enter the cost per kg:");
+            const disposalStatus = prompt("Enter the disposal status:");
+
+            const qrData = `Waste Type: ${wasteType}\nSource Location: ${sourceLocation}\nGenerated Date: ${generatedDate}\nWeight (kg): ${weightKg}\nRecyclable: ${recyclable}\nDisposal Method: ${disposalMethod}\nCost per kg: ${costPerKg}\nDisposal Status: ${disposalStatus}`;
+
+            QRCode.toCanvas(qrCodeElement, qrData, function (error) {
+                if (error) console.error(error);
+                console.log('QR Code generated!');
+            });
+
+            QRCode.toDataURL(qrData, function (err, url) {
+                if (err) console.error(err);
+                generatedQRCode = url;
+                downloadButton.style.display = 'block'; // Show download button
+            });
+
+            // Send data to server to append to CSV file
+            fetch('http://localhost:3000/add-data', { // Ensure the correct URL
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    wasteType,
+                    sourceLocation,
+                    generatedDate,
+                    weightKg,
+                    recyclable,
+                    disposalMethod,
+                    costPerKg,
+                    disposalStatus
+                })
+            })
+            .then(response => response.text())
+            .then(data => {
+                console.log(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        // Download the generated QR code as PNG
+        function downloadQRCode() {
+            const link = document.createElement('a');
+            link.href = generatedQRCode;
+            link.download = 'qrcode.png'; // Default to PNG format
+            link.click();
+        }
+
+        // Switch to scan mode
+        function switchToScanMode() {
+            qrContainer.style.display = 'none';
+            document.getElementById('scan-mode').style.display = 'block';
+            startScanning();
+        }
+
+        // Switch to generate mode
+        function switchToGenerateMode() {
+            if (stream) {
+                let tracks = stream.getTracks();
+                tracks.forEach(track => track.stop()); // Stop the camera
+            }
+            document.getElementById('scan-mode').style.display = 'none';
+            qrContainer.style.display = 'block';
+        }
+
+        // Initialize with Scan Mode
+        switchToScanMode();
+    </script>
+</body>
+</html>

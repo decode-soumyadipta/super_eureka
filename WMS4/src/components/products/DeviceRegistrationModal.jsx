@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, X, QrCode } from "lucide-react";
+import { X, QrCode, Camera } from "lucide-react";
 import { toast } from "react-toastify";
 import { deviceService } from "../../services/deviceService.js";
+import AIDeviceDetection from "./AIDeviceDetection.jsx";
 
 const DeviceRegistrationModal = ({ isOpen, onClose, onDeviceRegistered }) => {
     const [formData, setFormData] = useState({
@@ -25,6 +26,7 @@ const DeviceRegistrationModal = ({ isOpen, onClose, onDeviceRegistered }) => {
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [qrCodeData, setQrCodeData] = useState(null);
+    const [showAIDetection, setShowAIDetection] = useState(false);
 
     const deviceTypes = [
         "Laptop", "Desktop", "Monitor", "Printer", "Scanner", 
@@ -67,7 +69,7 @@ const DeviceRegistrationModal = ({ isOpen, onClose, onDeviceRegistered }) => {
         try {
             // Filter out empty specifications
             const cleanSpecs = Object.fromEntries(
-                Object.entries(formData.specifications).filter(([_, value]) => value.trim() !== '')
+                Object.entries(formData.specifications).filter(([, value]) => value.trim() !== '')
             );
 
             const deviceData = {
@@ -113,6 +115,21 @@ const DeviceRegistrationModal = ({ isOpen, onClose, onDeviceRegistered }) => {
     const handleClose = () => {
         setQrCodeData(null);
         onClose();
+    };
+
+    const handleAIDetectionResult = (detectionResult) => {
+        // Auto-populate form fields based on AI detection
+        setFormData(prev => ({
+            ...prev,
+            device_type: detectionResult.device_type,
+            device_name: prev.device_name || `${detectionResult.detected_class} Device`,
+            notes: prev.notes ? 
+                `${prev.notes}\n\nAI Detection: ${detectionResult.detected_class} (${detectionResult.confidence}% confidence)` :
+                `AI Detection: ${detectionResult.detected_class} (${detectionResult.confidence}% confidence)`
+        }));
+
+        toast.success(`Device detected as ${detectionResult.detected_class} with ${detectionResult.confidence}% confidence!`);
+        setShowAIDetection(false);
     };
 
     if (!isOpen) return null;
@@ -371,32 +388,121 @@ const DeviceRegistrationModal = ({ isOpen, onClose, onDeviceRegistered }) => {
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="flex-1 bg-primary-500 text-white py-2 px-4 rounded-lg hover:bg-primary-600 disabled:opacity-50 flex items-center justify-center gap-2"
+                                    ref={(el) => {
+                                        if (el) {
+                                            el.style.setProperty('background-color', '#16A34A', 'important');
+                                            el.style.setProperty('color', '#FFFFFF', 'important');
+                                            el.style.setProperty('border', '2px solid #16A34A', 'important');
+                                            el.style.setProperty('padding', '12px 20px', 'important');
+                                            el.style.setProperty('border-radius', '8px', 'important');
+                                            el.style.setProperty('font-weight', '600', 'important');
+                                            el.style.setProperty('font-size', '14px', 'important');
+                                            el.style.setProperty('box-shadow', '0 4px 12px rgba(22, 163, 74, 0.3)', 'important');
+                                            el.style.setProperty('cursor', isSubmitting ? 'not-allowed' : 'pointer', 'important');
+                                            el.style.setProperty('opacity', isSubmitting ? '0.7' : '1', 'important');
+                                        }
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        if (!isSubmitting) {
+                                            e.target.style.setProperty('background-color', '#15803D', 'important');
+                                            e.target.style.setProperty('border-color', '#15803D', 'important');
+                                            e.target.style.setProperty('transform', 'translateY(-2px)', 'important');
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (!isSubmitting) {
+                                            e.target.style.setProperty('background-color', '#16A34A', 'important');
+                                            e.target.style.setProperty('border-color', '#16A34A', 'important');
+                                            e.target.style.setProperty('transform', 'translateY(0px)', 'important');
+                                        }
+                                    }}
+                                    className="flex-1 flex items-center justify-center gap-2"
                                 >
                                     {isSubmitting ? (
                                         <>
                                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                            Registering...
+                                            <span style={{color: '#FFFFFF !important'}}>Registering...</span>
                                         </>
                                     ) : (
                                         <>
-                                            <QrCode size={20} />
-                                            Register Device
+                                            <QrCode size={20} style={{color: '#FFFFFF !important'}} />
+                                            <span style={{color: '#FFFFFF !important'}}>Register Device</span>
                                         </>
                                     )}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={handleClose}
-                                    className="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600"
+                                    ref={(el) => {
+                                        if (el) {
+                                            el.style.setProperty('background-color', '#DC2626', 'important');
+                                            el.style.setProperty('color', '#FFFFFF', 'important');
+                                            el.style.setProperty('border', '2px solid #DC2626', 'important');
+                                            el.style.setProperty('padding', '12px 20px', 'important');
+                                            el.style.setProperty('border-radius', '8px', 'important');
+                                            el.style.setProperty('font-weight', '600', 'important');
+                                            el.style.setProperty('font-size', '14px', 'important');
+                                            el.style.setProperty('box-shadow', '0 4px 12px rgba(220, 38, 38, 0.3)', 'important');
+                                            el.style.setProperty('cursor', 'pointer', 'important');
+                                        }
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.setProperty('background-color', '#B91C1C', 'important');
+                                        e.target.style.setProperty('border-color', '#B91C1C', 'important');
+                                        e.target.style.setProperty('transform', 'translateY(-2px)', 'important');
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.setProperty('background-color', '#DC2626', 'important');
+                                        e.target.style.setProperty('border-color', '#DC2626', 'important');
+                                        e.target.style.setProperty('transform', 'translateY(0px)', 'important');
+                                    }}
+                                    className="flex-1 flex items-center justify-center"
                                 >
-                                    Cancel
+                                    <span style={{color: '#FFFFFF !important'}}>Cancel</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAIDetection(true)}
+                                    ref={(el) => {
+                                        if (el) {
+                                            el.style.setProperty('background-color', '#059669', 'important');
+                                            el.style.setProperty('color', '#FFFFFF', 'important');
+                                            el.style.setProperty('border', '2px solid #059669', 'important');
+                                            el.style.setProperty('padding', '12px 20px', 'important');
+                                            el.style.setProperty('border-radius', '8px', 'important');
+                                            el.style.setProperty('font-weight', '600', 'important');
+                                            el.style.setProperty('font-size', '14px', 'important');
+                                            el.style.setProperty('box-shadow', '0 4px 12px rgba(5, 150, 105, 0.3)', 'important');
+                                            el.style.setProperty('cursor', 'pointer', 'important');
+                                        }
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        e.target.style.setProperty('background-color', '#047857', 'important');
+                                        e.target.style.setProperty('border-color', '#047857', 'important');
+                                        e.target.style.setProperty('transform', 'translateY(-2px)', 'important');
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.target.style.setProperty('background-color', '#059669', 'important');
+                                        e.target.style.setProperty('border-color', '#059669', 'important');
+                                        e.target.style.setProperty('transform', 'translateY(0px)', 'important');
+                                    }}
+                                    className="flex-1 flex items-center justify-center gap-2"
+                                >
+                                    <Camera size={20} style={{color: '#FFFFFF !important'}} />
+                                    <span style={{color: '#FFFFFF !important'}}>AI Detect Device</span>
                                 </button>
                             </div>
                         </form>
                     )}
                 </div>
             </motion.div>
+            {showAIDetection && (
+                <AIDeviceDetection 
+                    isOpen={showAIDetection}
+                    onClose={() => setShowAIDetection(false)} 
+                    onDetectionResult={handleAIDetectionResult} 
+                />
+            )}
         </div>
     );
 };

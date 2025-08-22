@@ -6,13 +6,16 @@ import { DashboardLoginForm } from "./DashboardLoginForm";
 const DashboardLogin = () => {
   return (
     <main className={styles.dashboardLogin}>
-      {/* Logo image placeholder above the login form */}
+      {/* Logo and brand section */}
       <div className={styles.logoWrapper}>
         <img
-          src="logo.png" // Update this path later
-          alt="Logo"
+          src="/logo.png"
+          alt="e-Shunya Logo"
           className={styles.logoImg}
         />
+        <div className={styles.brandText}>
+          <h1 className={styles.brandName}>e-Shunya</h1>
+        </div>
       </div>
       <div className={styles.div}>
         <DashboardLoginForm />

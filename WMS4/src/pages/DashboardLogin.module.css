@@ -20,15 +20,30 @@
 .logoWrapper {
   width: 100%;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   margin-bottom: 24px;
 }
 
 .logoImg {
-  width: 120px;
+  width: 80px;
   height: auto;
   object-fit: contain;
+  margin-bottom: 12px;
+}
+
+.brandText {
+  text-align: center;
+}
+
+.brandName {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2d5016;
+  margin: 0;
+  text-transform: none;
+  letter-spacing: 1px;
 }
 
 .div {

@@ -39,22 +39,13 @@ const deviceTypes = [
 
 function DisposalRequestForm({ onSubmit, onCancel, loading = false, initialData = null }) {
   const [formData, setFormData] = useState({
-    deviceType: initialData?.deviceType || '',
-    deviceBrand: initialData?.deviceBrand || '',
-    deviceModel: initialData?.deviceModel || '',
-    serialNumber: initialData?.serialNumber || '',
-    condition: initialData?.condition || '',
-    pickupAddress: initialData?.pickupAddress || '',
-    city: initialData?.city || '',
-    state: initialData?.state || '',
-    pincode: initialData?.pincode || '',
     contactPhone: initialData?.contactPhone || '',
     preferredDate: initialData?.preferredDate || '',
     preferredTimeSlot: initialData?.preferredTimeSlot || '',
     specialInstructions: initialData?.specialInstructions || '',
     latitude: initialData?.latitude || null,
     longitude: initialData?.longitude || null,
-    detectedAddress: initialData?.detectedAddress || '',
+    fullAddress: initialData?.fullAddress || '',
     selectedDevices: initialData?.selectedDevices || []
   });
 
@@ -94,7 +85,7 @@ function DisposalRequestForm({ onSubmit, onCancel, loading = false, initialData 
       ...prev,
       latitude: locationData.latitude,
       longitude: locationData.longitude,
-      detectedAddress: locationData.address || ''
+      fullAddress: locationData.address || ''
     }));
     // Clear location-related errors
     setErrors(prev => ({
@@ -113,13 +104,10 @@ function DisposalRequestForm({ onSubmit, onCancel, loading = false, initialData 
     }
 
     // Address validation - either from map or manual input
-    if (!formData.detectedAddress && !formData.pickupAddress) {
-      newErrors.pickupAddress = 'Pickup address is required (use map or enter manually)';
+    if (!formData.fullAddress) {
+      newErrors.fullAddress = 'Pickup address is required (use map or enter manually)';
     }
     
-    if (!formData.city) newErrors.city = 'City is required';
-    if (!formData.state) newErrors.state = 'State is required';
-    if (!formData.pincode) newErrors.pincode = 'Pincode is required';
     if (!formData.contactPhone) newErrors.contactPhone = 'Contact phone is required';
     if (!formData.preferredDate) newErrors.preferredDate = 'Preferred date is required';
     if (!formData.preferredTimeSlot) newErrors.preferredTimeSlot = 'Time slot is required';
@@ -133,11 +121,6 @@ function DisposalRequestForm({ onSubmit, onCancel, loading = false, initialData 
     // Validate phone number (basic validation)
     if (formData.contactPhone && !/^\d{10}$/.test(formData.contactPhone)) {
       newErrors.contactPhone = 'Phone number must be 10 digits';
-    }
-
-    // Validate pincode
-    if (formData.pincode && !/^\d{6}$/.test(formData.pincode)) {
-      newErrors.pincode = 'Pincode must be 6 digits';
     }
 
     setErrors(newErrors);
@@ -158,33 +141,35 @@ function DisposalRequestForm({ onSubmit, onCancel, loading = false, initialData 
       // Get current user data for required fields
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
       
-      // Use detected address from map OR manual pickup address
-      const finalAddress = formData.detectedAddress || formData.pickupAddress || 
-                          `${formData.city}, ${formData.state} ${formData.pincode}`;
-      
-      // Prepare form data with EXACT backend field names
+      // Prepare form data with simplified structure
       const submissionData = {
-        // Required backend fields (exact names from backend validation)
-        department: userData.department || 'Unknown Department',
-        contact_name: userData.name || userData.username || 'Unknown Contact',
-        contact_phone: formData.contactPhone,
-        contact_email: userData.email || 'user@example.com',
-        pickup_address: finalAddress,
+        // Core form fields
+        contactPhone: formData.contactPhone,
+        fullAddress: formData.fullAddress,
         latitude: parseFloat(formData.latitude),
         longitude: parseFloat(formData.longitude),
-        e_waste_description: formData.selectedDevices.map(device => 
-          `${device.device_type} - ${device.device_name} (${device.brand || 'Unknown Brand'})`
-        ).join('; '),
+        preferredDate: formData.preferredDate,
+        preferredTimeSlot: formData.preferredTimeSlot,
+        specialInstructions: formData.specialInstructions,
+        selectedDevices: formData.selectedDevices,
         
-        // Optional fields
-        weight_kg: null, // Can be calculated later
-        item_count: formData.selectedDevices.length,
+        // Additional data for backend
+        contact_phone: formData.contactPhone,
+        pickup_address: formData.fullAddress,
         preferred_date: formData.preferredDate,
         preferred_time_slot: formData.preferredTimeSlot,
-        additional_notes: formData.specialInstructions || null
+        additional_notes: formData.specialInstructions,
+        
+        // Device information
+        e_waste_description: formData.selectedDevices.length > 0 
+          ? formData.selectedDevices.map(device => 
+              `${device.device_type} - ${device.device_name} (${device.brand || 'Unknown Brand'})`
+            ).join('; ')
+          : 'E-waste disposal request',
+        item_count: formData.selectedDevices.length
       };
       
-      console.log('Submitting disposal request with exact backend format:', submissionData);
+      console.log('Submitting disposal request with data:', submissionData);
       
       const result = await onSubmit(submissionData);
       
@@ -260,52 +245,13 @@ function DisposalRequestForm({ onSubmit, onCancel, loading = false, initialData 
                 fullWidth
                 multiline
                 rows={3}
-                name="pickupAddress"
+                name="fullAddress"
                 label="Pickup Address *"
-                value={formData.pickupAddress}
+                value={formData.fullAddress}
                 onChange={handleChange}
                 placeholder="Complete pickup address"
-                error={!!errors.pickupAddress}
-                helperText={errors.pickupAddress}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                name="city"
-                label="City *"
-                value={formData.city}
-                onChange={handleChange}
-                placeholder="City"
-                error={!!errors.city}
-                helperText={errors.city}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                name="state"
-                label="State *"
-                value={formData.state}
-                onChange={handleChange}
-                placeholder="State"
-                error={!!errors.state}
-                helperText={errors.state}
-              />
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                name="pincode"
-                label="Pincode *"
-                value={formData.pincode}
-                onChange={handleChange}
-                placeholder="6-digit pincode"
-                error={!!errors.pincode}
-                helperText={errors.pincode}
+                error={!!errors.fullAddress}
+                helperText={errors.fullAddress}
               />
             </Grid>
 

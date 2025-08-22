@@ -36,6 +36,15 @@ import {
     disposalRequestValidation
 } from './controllers/disposalController.js';
 
+// Import IPFS controller
+import { 
+    uploadFileToIPFS, 
+    getUserIPFSUploads, 
+    getAllIPFSUploads, 
+    deleteIPFSUpload, 
+    upload 
+} from './controllers/ipfsController.js';
+
 // Import middleware
 import { authenticateToken, requireAdmin, requireSameDepartment } from './middleware/auth.js';
 
@@ -130,6 +139,22 @@ app.get('/api/disposal/requests/:requestId', authenticateToken, getDisposalReque
 
 // Update disposal request status (protected - vendor/admin only)
 app.put('/api/disposal/requests/:requestId/status', authenticateToken, updateDisposalRequestStatus);
+
+// =====================
+// IPFS Upload Routes
+// =====================
+
+// Upload file to IPFS (protected)
+app.post('/api/ipfs/upload', authenticateToken, upload.single('file'), uploadFileToIPFS);
+
+// Get user's IPFS uploads (protected)
+app.get('/api/ipfs/uploads', authenticateToken, getUserIPFSUploads);
+
+// Get all IPFS uploads (admin only)
+app.get('/api/admin/ipfs/uploads', authenticateToken, requireAdmin, getAllIPFSUploads);
+
+// Delete IPFS upload record (protected)
+app.delete('/api/ipfs/uploads/:id', authenticateToken, deleteIPFSUpload);
 
 // =====================
 // Department Routes

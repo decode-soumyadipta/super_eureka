@@ -11,6 +11,7 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import DisposalPage from "./pages/DisposalPage";
 import DashboardLogin from './pages/DashboardLogin';
 import { authService } from './services/authService.js';
+import IPFSUploadPage from './pages/IPFSUploadPage.jsx';
 
 // Protected Route component
 const ProtectedRoute = ({ children, adminOnly = false }) => {
@@ -124,6 +125,11 @@ function App() {
                 <Route path='/disposal' element={
                     <ProtectedRoute>
                         <DisposalPage />
+                    </ProtectedRoute>
+                } />
+                <Route path='/ipfs-upload' element={
+                    <ProtectedRoute>
+                        <IPFSUploadPage />
                     </ProtectedRoute>
                 } />
                 

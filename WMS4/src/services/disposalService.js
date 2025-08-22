@@ -6,30 +6,72 @@ export const disposalService = {
   // Create a new e-waste disposal request
   createRequest: async (requestData) => {
     try {
+      console.log('🚀 FRONTEND: Starting disposal request creation...');
+      console.log('📋 FRONTEND: Input request data:', JSON.stringify(requestData, null, 2));
+      
       // Get current user data
       const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      console.log('👤 FRONTEND: User data from localStorage:', JSON.stringify(userData, null, 2));
       
       // Transform form data to match EXACT backend expectations
       const backendData = {
         department: userData.department || 'Unknown Department',
-        contact_name: userData.name || 'Unknown Contact',
+        contact_name: userData.name || userData.username || 'Unknown Contact',
         contact_phone: requestData.contactPhone || requestData.contact_phone,
         contact_email: userData.email || 'user@example.com',
-        pickup_address: requestData.pickupAddress || requestData.pickup_address,
+        pickup_address: requestData.fullAddress || requestData.pickupAddress || requestData.pickup_address,
         latitude: parseFloat(requestData.latitude),
         longitude: parseFloat(requestData.longitude),
-        e_waste_description: requestData.e_waste_description || 'E-waste disposal request',
+        e_waste_description: requestData.e_waste_description || 
+                           (requestData.selectedDevices && requestData.selectedDevices.length > 0 
+                             ? requestData.selectedDevices.map(device => 
+                                 `${device.device_type} - ${device.device_name} (${device.brand || 'Unknown Brand'})`
+                               ).join('; ')
+                             : 'E-waste disposal request'),
         weight_kg: requestData.weight_kg || null,
-        item_count: requestData.selectedDevices?.length || 1,
-        preferred_date: requestData.preferredDate || requestData.preferred_date,
-        preferred_time_slot: requestData.preferredTimeSlot || requestData.preferred_time_slot,
-        additional_notes: requestData.specialInstructions || requestData.additional_notes
+        item_count: requestData.selectedDevices?.length || requestData.item_count || 1,
+        preferred_date: requestData.preferredDate || requestData.preferred_date || null,
+        preferred_time_slot: requestData.preferredTimeSlot || requestData.preferred_time_slot || null,
+        additional_notes: requestData.specialInstructions || requestData.additional_notes || null
       };
 
-      console.log('Sending disposal request to backend:', backendData);
+      console.log('🔄 FRONTEND: Transformed backend data:', JSON.stringify(backendData, null, 2));
+
+      // Ensure required fields are not null/undefined
+      const requiredFields = {
+        contact_phone: backendData.contact_phone,
+        pickup_address: backendData.pickup_address,
+        latitude: backendData.latitude,
+        longitude: backendData.longitude,
+        e_waste_description: backendData.e_waste_description
+      };
+
+      console.log('✅ FRONTEND: Checking required fields:', JSON.stringify(requiredFields, null, 2));
+
+      for (const [field, value] of Object.entries(requiredFields)) {
+        if (!value && value !== 0) {
+          const error = `Required field '${field}' is missing or empty: ${value}`;
+          console.error('❌ FRONTEND: Validation error:', error);
+          throw new Error(error);
+        }
+      }
+
+      // Check if coordinates are valid numbers
+      if (isNaN(backendData.latitude) || isNaN(backendData.longitude)) {
+        const error = `Invalid coordinates - lat: ${backendData.latitude}, lng: ${backendData.longitude}`;
+        console.error('❌ FRONTEND: Coordinate error:', error);
+        throw new Error(error);
+      }
+
+      console.log('📤 FRONTEND: Sending POST request to /disposal/request');
+      console.log('📡 FRONTEND: Request URL:', '/disposal/request');
+      console.log('📋 FRONTEND: Final payload:', JSON.stringify(backendData, null, 2));
 
       const response = await api.post('/disposal/request', backendData);
-      console.log('Backend response:', response.data);
+      
+      console.log('✅ FRONTEND: Backend response received:', JSON.stringify(response.data, null, 2));
+      console.log('📊 FRONTEND: Response status:', response.status);
+      console.log('📊 FRONTEND: Response headers:', JSON.stringify(response.headers, null, 2));
       
       return {
         success: true,
@@ -37,19 +79,40 @@ export const disposalService = {
         data: response.data
       };
     } catch (error) {
-      console.error('Disposal request error:', error);
-      console.error('Error response:', error.response?.data);
+      console.error('❌ FRONTEND: Disposal request error occurred');
+      console.error('❌ FRONTEND: Error type:', typeof error);
+      console.error('❌ FRONTEND: Error message:', error.message);
+      console.error('❌ FRONTEND: Full error object:', error);
+      
+      if (error.response) {
+        console.error('❌ FRONTEND: HTTP Error Response:');
+        console.error('📊 FRONTEND: Status:', error.response.status);
+        console.error('📊 FRONTEND: Status Text:', error.response.statusText);
+        console.error('📋 FRONTEND: Response data:', JSON.stringify(error.response.data, null, 2));
+        console.error('📊 FRONTEND: Response headers:', JSON.stringify(error.response.headers, null, 2));
+      } else if (error.request) {
+        console.error('❌ FRONTEND: Network Error - No response received');
+        console.error('📡 FRONTEND: Request:', error.request);
+      } else {
+        console.error('❌ FRONTEND: Request setup error:', error.message);
+      }
       
       let errorMessage = 'Failed to create disposal request';
       
       if (error.response?.data?.errors) {
         // Validation errors from backend
-        errorMessage = error.response.data.errors.map(err => err.msg).join(', ');
+        const validationErrors = error.response.data.errors.map(err => err.msg).join(', ');
+        errorMessage = `Validation errors: ${validationErrors}`;
+        console.error('❌ FRONTEND: Validation errors:', validationErrors);
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
+        console.error('❌ FRONTEND: Backend error message:', errorMessage);
       } else if (error.message) {
         errorMessage = error.message;
+        console.error('❌ FRONTEND: JavaScript error:', errorMessage);
       }
+      
+      console.error('❌ FRONTEND: Final error message to user:', errorMessage);
       
       return {
         success: false,

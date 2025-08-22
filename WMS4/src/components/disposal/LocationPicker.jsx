@@ -270,21 +270,8 @@ function LocationPicker({ onLocationChange, initialLocation = null }) {
       </Typography>
       
       <Typography variant="body2" color="text.secondary" gutterBottom sx={{ mb: 2 }}>
-        Use the map to select location or enter address manually. Both methods work.
+        Use the map to select location or click "Use Current Location" for auto-detection.
       </Typography>
-
-      {/* Single Address Field - Can be filled manually or automatically */}
-      <TextField
-        fullWidth
-        multiline
-        rows={3}
-        label="Pickup Address *"
-        value={address}
-        onChange={handleManualAddressChange}
-        placeholder="Enter pickup address manually or use map below to auto-detect"
-        sx={{ mb: 2 }}
-        helperText="This field will auto-fill when you use the map, or you can type manually"
-      />
 
       {mapError && (
         <Alert severity="info" sx={{ mb: 2 }}>
@@ -331,10 +318,11 @@ function LocationPicker({ onLocationChange, initialLocation = null }) {
       <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid item>
           <Button
-            variant="outlined"
+            variant="contained"
             onClick={getCurrentLocation}
             disabled={loading}
             size="small"
+            color="primary"
           >
             {loading ? 'Getting Location...' : 'Use Current Location'}
           </Button>
@@ -356,8 +344,8 @@ function LocationPicker({ onLocationChange, initialLocation = null }) {
 
       <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
         {mapInitialized 
-          ? 'Drag the red marker or click on the map to set location. Address will auto-fill above.'
-          : 'Enter address manually in the field above, or try loading the map for precise location.'
+          ? 'Drag the red marker or click on the map to set location. Address will auto-fill in the form above.'
+          : 'Use "Use Current Location" button or enter address manually in the pickup address field above.'
         }
       </Typography>
     </Box>

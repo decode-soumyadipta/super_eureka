@@ -1,10 +1,10 @@
 // Migration file to create the disposal_requests table
 
-const db = require('../config/database');
+import { executeQuery } from '../config/database.js';
 
 async function createDisposalRequestsTable() {
   try {
-    await db.query(`
+    const result = await executeQuery(`
       CREATE TABLE IF NOT EXISTS disposal_requests (
         id INT AUTO_INCREMENT PRIMARY KEY,
         request_id VARCHAR(50) NOT NULL UNIQUE,
@@ -21,18 +21,24 @@ async function createDisposalRequestsTable() {
         preferred_date DATE,
         preferred_time_slot VARCHAR(50),
         additional_notes TEXT,
-        status ENUM('pending', 'approved', 'rejected', 'completed') DEFAULT 'pending',
+        status ENUM('pending', 'approved', 'rejected', 'completed', 'in_progress', 'cancelled') DEFAULT 'pending',
         vendor_notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
-    console.log('Disposal requests table created successfully');
-    return true;
+    
+    if (result.success) {
+      console.log('✅ Disposal requests table created successfully');
+      return true;
+    } else {
+      console.error('❌ Error creating disposal requests table:', result.error);
+      return false;
+    }
   } catch (error) {
-    console.error('Error creating disposal requests table:', error);
+    console.error('❌ Error creating disposal requests table:', error);
     return false;
   }
 }
 
-module.exports = createDisposalRequestsTable;
+export default createDisposalRequestsTable;

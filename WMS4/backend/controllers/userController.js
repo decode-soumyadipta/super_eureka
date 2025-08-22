@@ -7,8 +7,8 @@ import { executeQuery } from '../config/database.js';
 const generateToken = (userId) => {
     return jwt.sign(
         { userId },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN }
+        process.env.JWT_SECRET || 'ewaste-management-fallback-secret',
+        { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
 };
 

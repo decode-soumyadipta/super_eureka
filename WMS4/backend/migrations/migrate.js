@@ -1,4 +1,6 @@
 import { initializeDatabase, executeQuery } from '../config/database.js';
+import createDisposalRequestsTable from './create_disposal_requests_table.js';
+import createIPFSUploadsTable from './create_ipfs_uploads_table.js';
 
 // Create all necessary tables for the e-waste management system
 const createTables = async () => {
@@ -189,17 +191,31 @@ const createTables = async () => {
     }
 };
 
-// Run migration if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-    createTables()
-        .then(() => {
-            console.log('Migration process completed');
-            process.exit(0);
-        })
-        .catch((error) => {
-            console.error('Migration failed:', error);
-            process.exit(1);
-        });
+async function runMigrations() {
+    console.log('🚀 Starting database migrations...');
+    
+    try {
+        // Run disposal requests table migration
+        const disposalTableCreated = await createDisposalRequestsTable();
+        
+        // Run IPFS uploads table migration
+        const ipfsTableCreated = await createIPFSUploadsTable();
+        
+        if (disposalTableCreated && ipfsTableCreated) {
+            console.log('✅ All migrations completed successfully');
+        } else {
+            console.log('⚠️ Some migrations failed');
+        }
+        
+    } catch (error) {
+        console.error('❌ Migration error:', error);
+    }
 }
 
+// Run migration if this file is executed directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+    runMigrations();
+}
+
+export default runMigrations;
 export { createTables };

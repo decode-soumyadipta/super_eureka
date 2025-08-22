@@ -46,7 +46,9 @@ function DisposalRequestForm({ onSubmit, onCancel, loading = false, initialData 
     latitude: initialData?.latitude || null,
     longitude: initialData?.longitude || null,
     fullAddress: initialData?.fullAddress || '',
-    selectedDevices: initialData?.selectedDevices || []
+    selectedDevices: initialData?.selectedDevices || [],
+    weight_kg: initialData?.weight_kg || '', // Add weight field
+    estimated_value: initialData?.estimated_value || '' // Add estimated value field
   });
 
   const [errors, setErrors] = useState({});
@@ -159,6 +161,8 @@ function DisposalRequestForm({ onSubmit, onCancel, loading = false, initialData 
         preferred_date: formData.preferredDate,
         preferred_time_slot: formData.preferredTimeSlot,
         additional_notes: formData.specialInstructions,
+        weight_kg: formData.weight_kg ? parseFloat(formData.weight_kg) : null,
+        estimated_value: formData.estimated_value ? parseFloat(formData.estimated_value) : null,
         
         // Device information
         e_waste_description: formData.selectedDevices.length > 0 
@@ -344,6 +348,39 @@ function DisposalRequestForm({ onSubmit, onCancel, loading = false, initialData 
             onChange={handleChange}
             placeholder="Any special instructions for pickup (e.g., gate code, floor number, etc.)"
           />
+
+          {/* Weight and Estimated Value */}
+          <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+            Additional Information
+          </Typography>
+
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                name="weight_kg"
+                label="Weight (kg)"
+                value={formData.weight_kg}
+                onChange={handleChange}
+                placeholder="Estimated weight in kilograms"
+                error={!!errors.weight_kg}
+                helperText={errors.weight_kg}
+              />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                name="estimated_value"
+                label="Estimated Value ($)"
+                value={formData.estimated_value}
+                onChange={handleChange}
+                placeholder="Estimated value in dollars"
+                error={!!errors.estimated_value}
+                helperText={errors.estimated_value}
+              />
+            </Grid>
+          </Grid>
 
           {/* Submit Buttons */}
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>

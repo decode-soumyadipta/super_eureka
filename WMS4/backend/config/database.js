@@ -123,6 +123,7 @@ const initializeDatabase = async () => {
                 preferred_date DATE,
                 preferred_time_slot VARCHAR(50),
                 additional_notes TEXT,
+                estimated_value DECIMAL(12, 2),
                 status ENUM('pending', 'approved', 'rejected', 'completed', 'in_progress', 'cancelled') DEFAULT 'pending',
                 vendor_notes TEXT,
                 created_by INT,
@@ -134,6 +135,16 @@ const initializeDatabase = async () => {
         if (createDisposalTableResult.success) {
             console.log('✅ DATABASE: disposal_requests table ready');
         }
+
+        // Add estimated_value column if it doesn't exist (for existing databases)
+        console.log('🔄 DATABASE: Adding estimated_value column if missing...');
+        await executeQuery(`
+            ALTER TABLE disposal_requests 
+            ADD COLUMN IF NOT EXISTS estimated_value DECIMAL(12, 2) AFTER additional_notes;
+        `).catch(() => {
+            // Column might already exist, ignore error
+            console.log('ℹ️ DATABASE: estimated_value column already exists or couldn\'t be added');
+        });
 
         // Create IPFS uploads table if it doesn't exist
         console.log('🏗️ DATABASE: Creating ipfs_uploads table...');

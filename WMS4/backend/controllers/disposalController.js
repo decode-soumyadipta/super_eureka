@@ -35,7 +35,8 @@ const createDisposalRequest = async (req, res) => {
             item_count,
             preferred_date,
             preferred_time_slot,
-            additional_notes
+            additional_notes,
+            estimated_value
         } = req.body;
 
         // Generate a unique request ID if not provided
@@ -51,6 +52,7 @@ const createDisposalRequest = async (req, res) => {
         const processedWeight = weight_kg === '' || weight_kg === undefined ? null : parseFloat(weight_kg);
         const processedItemCount = item_count === '' || item_count === undefined ? null : parseInt(item_count);
         const processedPreferredDate = preferred_date === '' || preferred_date === undefined ? null : preferred_date;
+        const processedEstimatedValue = estimated_value === '' || estimated_value === undefined ? null : parseFloat(estimated_value);
 
         // Validate required coordinates
         const lat = parseFloat(latitude);
@@ -78,6 +80,7 @@ const createDisposalRequest = async (req, res) => {
             preferred_date: processedPreferredDate,
             preferred_time_slot: preferred_time_slot || null,
             additional_notes: additional_notes || null,
+            estimated_value: processedEstimatedValue,
             created_by: userId
         });
 
@@ -97,9 +100,10 @@ const createDisposalRequest = async (req, res) => {
                 preferred_date,
                 preferred_time_slot,
                 additional_notes,
+                estimated_value,
                 status,
                 created_by
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, [
             requestId,
             userDepartment,
@@ -115,6 +119,7 @@ const createDisposalRequest = async (req, res) => {
             processedPreferredDate,
             preferred_time_slot || null,
             additional_notes || null,
+            processedEstimatedValue,
             'pending',
             userId
         ]);
@@ -186,6 +191,14 @@ const getDisposalRequests = async (req, res) => {
 const getDisposalRequestById = async (req, res) => {
     try {
         const { id } = req.params;
+
+        // Validate that id is provided and not null/undefined
+        if (!id || id === 'null' || id === 'undefined') {
+            return res.status(400).json({
+                success: false,
+                message: 'Valid request ID is required'
+            });
+        }
 
         const result = await executeQuery(`
             SELECT * FROM disposal_requests WHERE request_id = ? OR id = ?
@@ -307,15 +320,17 @@ const disposalRequestValidation = [
         .trim()
         .notEmpty().withMessage('Device description is required')
         .isLength({ min: 5 }).withMessage('Please provide a detailed description of the e-waste'),
-    // Optional fields with basic validation
+    // Optional fields - these can be null/undefined/empty and won't be validated
     body('department').optional().trim(),
     body('contact_name').optional().trim(),
     body('contact_email').optional().isEmail().withMessage('Valid email address is required if provided'),
-    body('weight_kg').optional().isFloat({ min: 0 }).withMessage('Weight must be a positive number'),
-    body('item_count').optional().isInt({ min: 1 }).withMessage('Item count must be at least 1'),
-    body('preferred_date').optional().isDate().withMessage('Preferred date must be a valid date'),
     body('preferred_time_slot').optional().trim(),
-    body('additional_notes').optional().trim()
+    body('additional_notes').optional().trim(),
+    // These fields are completely optional and don't need validation
+    body('weight_kg').optional({ checkFalsy: false }),
+    body('item_count').optional({ checkFalsy: false }),
+    body('preferred_date').optional({ checkFalsy: false }),
+    body('estimated_value').optional({ checkFalsy: false })
 ];
 
 export {

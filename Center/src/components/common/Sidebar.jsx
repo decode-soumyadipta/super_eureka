@@ -11,13 +11,13 @@ const SIDEBAR_ITEMS = [
 		href: "/",
 	},
 	{ 
-		name: "Manage Approved Requests", 
+		name: "Approved Requests", 
 		icon: Package, 
 		color: "#10B981", 
 		href: "/approved-requests" 
 	},
 	{ 
-		name: "Manage Scheduled Requests", 
+		name: "Scheduled Requests", 
 		icon: Calendar, 
 		color: "#F59E0B", 
 		href: "/scheduled-requests" 
@@ -54,12 +54,12 @@ const Sidebar = () => {
 				<nav className='mt-8 flex-grow'>
 					{SIDEBAR_ITEMS.map((item) => (
 						<Link key={item.href} to={item.href}>
-							<motion.div className='flex items-center p-4 text-lg font-medium rounded-lg hover:bg-gray-700 transition-colors mb-2'>
+							<motion.div className='flex items-center p-3 text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors mb-2'>
 								<item.icon size={20} style={{ color: item.color, minWidth: "20px" }} />
 								<AnimatePresence>
 									{isSidebarOpen && (
 										<motion.span
-											className='ml-4 whitespace-nowrap'
+											className='ml-3 truncate text-left flex-1'
 											initial={{ opacity: 0, width: 0 }}
 											animate={{ opacity: 1, width: "auto" }}
 											exit={{ opacity: 0, width: 0 }}

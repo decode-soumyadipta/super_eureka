@@ -16,10 +16,16 @@ const orderStats = {
 
 const OrdersPage = () => {
 	return (
-		<div className='flex-1 relative z-10 overflow-auto'>
+		<div className='flex-1 flex flex-col h-full bg-gray-900'>
 			<Header title={"Orders"} />
 
-			<main className='max-w-7xl mx-auto py-6 px-4 lg:px-8'>
+			<main className='flex-1 py-6 px-6 overflow-auto'>
+				{/* Page Header */}
+				<div className='mb-8'>
+					<h1 className='text-3xl font-bold text-gray-100 mb-2'>Orders Management</h1>
+					<p className='text-gray-400'>Track and manage all customer orders and requests</p>
+				</div>
+
 				<motion.div
 					className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8'
 					initial={{ opacity: 0, y: 20 }}

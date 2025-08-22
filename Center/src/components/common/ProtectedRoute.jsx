@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 
 const ProtectedRoute = ({ children }) => {
@@ -12,7 +12,8 @@ const ProtectedRoute = ({ children }) => {
 
       if (token && user) {
         try {
-          const userData = JSON.parse(user);
+          // Just check if user data is valid JSON
+          JSON.parse(user);
           setIsAuthenticated(true);
         } catch (error) {
           console.error('Error parsing user data:', error);

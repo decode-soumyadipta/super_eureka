@@ -684,7 +684,6 @@ export const respondToOrder = async (req, res) => {
         const { orderId } = req.params;
         const { 
             action, // 'approve', 'reject', 'request_info'
-            vendor_notes,
             estimated_cost,
             estimated_completion,
             assigned_technician_id,
@@ -713,8 +712,8 @@ export const respondToOrder = async (req, res) => {
 
         const currentOrder = orderResult.data[0];
         let newStatus = currentOrder.status;
-        let updateFields = ['vendor_notes = ?', 'updated_at = CURRENT_TIMESTAMP'];
-        let updateValues = [vendor_notes || null];
+        let updateFields = ['updated_at = CURRENT_TIMESTAMP'];
+        let updateValues = [];
 
         // Determine new status and fields based on action
         switch (action) {
@@ -765,7 +764,7 @@ export const respondToOrder = async (req, res) => {
             {
                 sql: `INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, notes)
                       VALUES (?, ?, ?, ?, ?)`,
-                params: [orderId, currentOrder.status, newStatus, req.user.id, vendor_notes || `Vendor ${action} - ${req.user.name}`]
+                params: [orderId, currentOrder.status, newStatus, req.user.id, `Vendor ${action} - ${req.user.name}`]
             }
         ];
 
@@ -793,6 +792,96 @@ export const respondToOrder = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to process vendor response'
+        });
+    }
+};
+
+// Respond to disposal request (vendor action)
+export const respondToDisposalRequest = async (req, res) => {
+    try {
+        const { requestId } = req.params;
+        const { status } = req.body;
+
+        // Validate required fields
+        if (!status) {
+            return res.status(400).json({
+                success: false,
+                message: 'Status is required'
+            });
+        }
+
+        // Validate status values
+        const validStatuses = ['approved', 'rejected', 'pickup_scheduled', 'out_for_pickup', 'pickup_completed', 'cancelled'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid status value'
+            });
+        }
+
+        // Get current request to validate
+        const currentRequest = await executeQuery(
+            'SELECT * FROM disposal_requests WHERE request_id = ? OR id = ?',
+            [requestId, requestId]
+        );
+
+        if (!currentRequest.success || currentRequest.data.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Disposal request not found'
+            });
+        }
+
+        const request = currentRequest.data[0];
+
+        // Update disposal request status
+        let updateFields = ['status = ?', 'updated_at = CURRENT_TIMESTAMP'];
+        let updateValues = [status];
+
+        // Add pickup datetime for scheduled pickups
+        if (status === 'pickup_scheduled' && req.body.pickup_datetime) {
+            updateFields.push('pickup_datetime = ?');
+            updateValues.push(req.body.pickup_datetime);
+        }
+
+        const query = `
+            UPDATE disposal_requests 
+            SET ${updateFields.join(', ')}
+            WHERE request_id = ? OR id = ?
+        `;
+        updateValues.push(requestId, requestId);
+
+        const result = await executeQuery(query, updateValues);
+
+        if (!result.success) {
+            throw new Error('Failed to update disposal request');
+        }
+
+        // Log the status change (optional - create a simple log)
+        const action = status === 'approved' ? 'approved' : 
+                     status === 'rejected' ? 'rejected' : 
+                     status === 'pickup_scheduled' ? 'scheduled pickup' :
+                     status === 'out_for_pickup' ? 'started pickup' :
+                     status === 'pickup_completed' ? 'completed pickup' : 'updated';
+
+        console.log(`✅ Disposal request ${request.request_id} ${action} by user ${req.user.name}`);
+
+        res.json({
+            success: true,
+            message: `Disposal request ${action} successfully`,
+            data: {
+                request_id: request.request_id,
+                status: status,
+                updated_at: new Date().toISOString()
+            }
+        });
+
+    } catch (error) {
+        console.error('Error responding to disposal request:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update disposal request',
+            error: error.message
         });
     }
 };

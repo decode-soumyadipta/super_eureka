@@ -11,6 +11,31 @@ export const createTables = async () => {
             throw new Error('Database connection failed');
         }
 
+        // Check if pickup_datetime column exists in disposal_requests table and add it if missing
+        try {
+            const columnCheck = await executeQuery(`
+                SELECT COLUMN_NAME 
+                FROM INFORMATION_SCHEMA.COLUMNS 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'disposal_requests' 
+                AND COLUMN_NAME = 'pickup_datetime'
+            `);
+            
+            if (!columnCheck.success || columnCheck.data.length === 0) {
+                console.log('🔄 Adding missing pickup_datetime column to disposal_requests table...');
+                await executeQuery(`
+                    ALTER TABLE disposal_requests 
+                    ADD COLUMN pickup_datetime DATETIME NULL 
+                    AFTER status
+                `);
+                console.log('✅ pickup_datetime column added successfully');
+            } else {
+                console.log('✅ pickup_datetime column already exists');
+            }
+        } catch (alterError) {
+            console.log('Note: Could not check/add pickup_datetime column, will be created with new table');
+        }
+
         // Users table
         await executeQuery(`
             CREATE TABLE IF NOT EXISTS users (
@@ -112,7 +137,6 @@ export const createTables = async () => {
                 estimated_completion DATETIME,
                 completed_at DATETIME,
                 notes TEXT,
-                vendor_notes TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
@@ -255,8 +279,7 @@ export const createTables = async () => {
                 additional_notes TEXT,
                 estimated_value DECIMAL(12, 2),
                 status ENUM('pending', 'approved', 'pickup_scheduled', 'out_for_pickup', 'pickup_completed', 'rejected', 'cancelled', 'in_progress', 'completed') DEFAULT 'pending',
-                vendor_notes TEXT,
-                pickup_datetime DATETIME,
+                pickup_datetime DATETIME NULL,
                 created_by INT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -307,32 +330,6 @@ const insertDefaultData = async () => {
             ]);
             
             console.log('✅ Default admin user created');
-        }
-
-        // Check if vendor user exists
-        const vendorCheck = await executeQuery(
-            'SELECT id FROM users WHERE email = ? AND role = ?',
-            ['vendor@ewaste.com', 'vendor']
-        );
-
-        if (!vendorCheck.success || vendorCheck.data.length === 0) {
-            // Insert default vendor user (password: vendor123)
-            const bcrypt = await import('bcryptjs');
-            const hashedPassword = await bcrypt.default.hash('vendor123', 12);
-            
-            await executeQuery(`
-                INSERT INTO users (name, email, password, role, department, phone) 
-                VALUES (?, ?, ?, ?, ?, ?)
-            `, [
-                'E-Waste Vendor',
-                'vendor@ewaste.com',
-                hashedPassword,
-                'vendor',
-                'Waste Management',
-                '+1-555-0300'
-            ]);
-            
-            console.log('✅ Default vendor user created');
         }
 
         // Insert default repair center

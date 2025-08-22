@@ -68,7 +68,25 @@ const LoginPage = () => {
       >
         <div className='bg-gray-800 bg-opacity-50 backdrop-blur-md shadow-2xl rounded-2xl p-8 border border-gray-700'>
           <div className='text-center mb-8'>
-            <h2 className='text-3xl font-bold text-gray-100 mb-2'>E-Waste Management</h2>
+            {/* Logo Image */}
+            <div className='flex justify-center mb-4'>
+              <div className='w-24 h-24 bg-gray-600 rounded-lg flex items-center justify-center border-2 border-gray-500 overflow-hidden'>
+                <img 
+                  src="/ds,mv.png" 
+                  alt="E-Waste Management Logo" 
+                  className='w-full h-full object-contain'
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+                <div className='text-gray-400 text-sm text-center hidden flex-col items-center justify-center'>
+                  <div className='mb-1'>📷</div>
+                  <div>Logo</div>
+                </div>
+              </div>
+            </div>
+            <h3 className='text-2xl font-bold text-gray-100 mb-2'>E-Shunyaa</h3>
             <p className='text-gray-400'>Sign in to your account</p>
           </div>
 

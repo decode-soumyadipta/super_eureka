@@ -33,7 +33,7 @@ export const DashboardLoginForm = () => {
     try {
       const response = await fetch('http://localhost:5000/api/departments');
       const data = await response.json();
-      
+
       if (data.success && data.data.departments) {
         setDepartments(data.data.departments);
       } else {
@@ -62,7 +62,7 @@ export const DashboardLoginForm = () => {
         if (response.success) {
           toast.success("Login successful!");
           const user = response.data.user;
-          
+
           // Navigate based on user role
           setTimeout(() => {
             if (user.role === 'admin') {
@@ -227,8 +227,8 @@ export const DashboardLoginForm = () => {
           </div>
         )}
 
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           className={styles.rectangle3}
           disabled={isLoading}
         >

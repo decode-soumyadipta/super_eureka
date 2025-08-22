@@ -1,5 +1,6 @@
 .dashboardLogin {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   height: 100vh;
@@ -13,7 +14,21 @@
   text-align: center;
   text-transform: uppercase;
   line-height: 1;
-  background-color: rgba(33, 72, 193, 1); /* Set background color */
+  background: #fff;
+}
+
+.logoWrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.logoImg {
+  width: 120px;
+  height: auto;
+  object-fit: contain;
 }
 
 .div {
@@ -24,8 +39,9 @@
   max-width: 400px;
   padding: 20px;
   align-items: center;
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(76, 175, 80, 0.15);
   z-index: 1;
 }
 
@@ -46,8 +62,9 @@
 }
 
 .rectangle {
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 1);
+  border-radius: 6px;
+  border: 1px solid #a5d6a7;
+  background: #e8f5e9;
   display: flex;
   padding: 13px 12px;
   align-items: center;
@@ -64,16 +81,17 @@
 }
 
 .username {
+  color: #388e3c;
   border: none;
   outline: none;
   background: transparent;
-  color: white;
   width: 100%;
   padding: 8px;
+  font-size: 15px;
 }
 
 .username::placeholder {
-  color: rgba(255, 255, 255, 0.7);
+  color: #66bb6a;
 }
 
 /* Fix dropdown styling to make options visible */
@@ -97,8 +115,9 @@
 }
 
 .rectangle2 {
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 1);
+  border-radius: 6px;
+  border: 1px solid #a5d6a7;
+  background: #e8f5e9;
   display: flex;
   padding: 13px 12px;
   align-items: center;
@@ -115,29 +134,35 @@
 }
 
 .password {
+  color: #388e3c;
   flex-grow: 1;
   background: transparent;
   border: none;
-  color: white;
   outline: none;
+  font-size: 15px;
 }
 
 .password::placeholder {
-  color: white;
+  color: #66bb6a;
   text-transform: uppercase;
 }
 
 .rectangle3 {
-  border-radius: 4px;
-  background-color: rgba(255, 255, 255, 1);
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  background-color: #43a047;
+  box-shadow: 0px 4px 12px rgba(76, 175, 80, 0.15);
   padding: 13px 70px;
   font-size: 16px;
-  color: #000001;
+  color: #fff;
   font-weight: 600;
   line-height: 1;
   border: none;
   cursor: pointer;
   width: 100%;
   text-transform: uppercase;
+  transition: background 0.2s;
+}
+
+.rectangle3:hover {
+  background-color: #388e3c;
 }

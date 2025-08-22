@@ -209,7 +209,6 @@ app.put('/api/vendor/orders/:orderId/respond', authenticateToken, async (req, re
         const { orderId } = req.params;
         const { 
             action, // 'approve', 'reject', 'request_info'
-            vendor_notes,
             estimated_cost,
             estimated_completion,
             assigned_technician_id,
@@ -240,8 +239,8 @@ app.put('/api/vendor/orders/:orderId/respond', authenticateToken, async (req, re
 
         const currentOrder = orderResult.data[0];
         let newStatus = currentOrder.status;
-        let updateFields = ['vendor_notes = ?', 'updated_at = CURRENT_TIMESTAMP'];
-        let updateValues = [vendor_notes || null];
+        let updateFields = ['updated_at = CURRENT_TIMESTAMP'];
+        let updateValues = [];
 
         // Determine new status based on action
         switch (action) {
@@ -293,7 +292,7 @@ app.put('/api/vendor/orders/:orderId/respond', authenticateToken, async (req, re
         await executeQuery(`
             INSERT INTO order_status_history (order_id, old_status, new_status, changed_by, notes)
             VALUES (?, ?, ?, ?, ?)
-        `, [orderId, currentOrder.status, newStatus, req.user.id, vendor_notes || `Vendor ${action} - ${req.user.name}`]);
+        `, [orderId, currentOrder.status, newStatus, req.user.id, `Vendor ${action} - ${req.user.name}`]);
 
         res.json({
             success: true,
@@ -454,7 +453,7 @@ app.put('/api/vendor/disposal-requests/:requestId/respond', authenticateToken, a
         }
 
         const { requestId } = req.params;
-        const { status, vendor_notes, pickup_datetime } = req.body;
+        const { status, pickup_datetime } = req.body;
 
         // Validate status value
         const validStatuses = ['pending', 'approved', 'pickup_scheduled', 'out_for_pickup', 'pickup_completed', 'rejected', 'cancelled'];
@@ -468,21 +467,21 @@ app.put('/api/vendor/disposal-requests/:requestId/respond', authenticateToken, a
         const { executeQuery } = await import('./config/database.js');
 
         // Update the disposal request
-        let updateFields = ['status = ?', 'vendor_notes = ?', 'updated_at = CURRENT_TIMESTAMP'];
-        let updateValues = [status, vendor_notes || null];
+        let updateFields = ['status = ?', 'updated_at = CURRENT_TIMESTAMP'];
+        let updateValues = [status];
 
         if (pickup_datetime && status === 'pickup_scheduled') {
             updateFields.push('pickup_datetime = ?');
             updateValues.push(pickup_datetime);
         }
 
-        updateValues.push(requestId);
+        updateValues.push(requestId, requestId);
 
         const updateResult = await executeQuery(`
             UPDATE disposal_requests 
             SET ${updateFields.join(', ')}
             WHERE request_id = ? OR id = ?
-        `, [...updateValues, requestId]);
+        `, updateValues);
 
         if (!updateResult.success) {
             return res.status(500).json({

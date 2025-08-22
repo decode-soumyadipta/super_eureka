@@ -75,10 +75,10 @@ const ProductsPage = () => {
 	};
 
 	return (
-		<div className='flex-1 overflow-auto relative z-10'>
+		<div className='flex-1 flex flex-col h-full bg-gray-900'>
 			<Header title='E-Waste Disposal Services' />
 
-			<main className='max-w-7xl mx-auto py-6 px-4 lg:px-8'>
+			<main className='flex-1 py-6 px-6 overflow-auto'>
 				{/* Page Header */}
 				<div className='mb-8'>
 					<h1 className='text-3xl font-bold text-gray-100 mb-2'>Disposal Services Management</h1>

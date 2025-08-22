@@ -21,10 +21,15 @@ async function createDisposalRequestsTable() {
         preferred_date DATE,
         preferred_time_slot VARCHAR(50),
         additional_notes TEXT,
-        status ENUM('pending', 'approved', 'rejected', 'completed', 'in_progress', 'cancelled') DEFAULT 'pending',
+        status ENUM('pending', 'approved', 'pickup_scheduled', 'out_for_pickup', 'pickup_completed', 'rejected', 'completed', 'in_progress', 'cancelled') DEFAULT 'pending',
+        pickup_datetime DATETIME NULL,
         vendor_notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_request_id (request_id),
+        INDEX idx_status (status),
+        INDEX idx_pickup_datetime (pickup_datetime),
+        INDEX idx_created_at (created_at)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
     

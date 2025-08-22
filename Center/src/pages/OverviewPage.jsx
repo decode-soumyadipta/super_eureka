@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Package, Clock, CheckCircle, Truck, AlertCircle, Eye, MapPin, Phone, Mail, Calendar, User, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -151,10 +151,10 @@ const OverviewPage = () => {
 	};
 
 	return (
-		<div className='flex-1 overflow-auto relative z-10'>
+		<div className='flex-1 flex flex-col h-full bg-gray-900'>
 			<Header title='E-Waste Management Dashboard' />
 
-			<main className='max-w-7xl mx-auto py-6 px-4 lg:px-8'>
+			<main className='flex-1 py-6 px-6 overflow-auto'>
 				{/* Page Header */}
 				<div className='mb-8'>
 					<h1 className='text-3xl font-bold text-gray-100 mb-2'>Admin Dashboard</h1>
@@ -173,7 +173,7 @@ const OverviewPage = () => {
 
 				{/* STATS */}
 				<motion.div
-					className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8'
+					className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8'
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 1 }}
@@ -308,192 +308,162 @@ const OverviewPage = () => {
 						</div>
 					)}
 				</motion.div>
+			</main>
 
-				{/* Request Details Modal */}
-				{selectedRequest && (
-					<div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'>
-						<motion.div
-							initial={{ opacity: 0, scale: 0.9 }}
-							animate={{ opacity: 1, scale: 1 }}
-							transition={{ duration: 0.3 }}
-							className='bg-gray-800 rounded-xl max-w-4xl max-h-[90vh] overflow-y-auto w-full border border-gray-700'
-						>
-							<div className='p-6'>
-								<div className='flex justify-between items-center mb-6'>
-									<h3 className='text-2xl font-bold text-gray-100'>
-										Request Details - {selectedRequest.request_id}
-									</h3>
-									<button
-										onClick={handleCloseDetails}
-										className='text-gray-400 hover:text-gray-300 text-2xl'
-									>
-										×
-									</button>
+			{/* Request Details Modal */}
+			{selectedRequest && (
+				<div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'>
+					<motion.div
+						initial={{ opacity: 0, scale: 0.9 }}
+						animate={{ opacity: 1, scale: 1 }}
+						transition={{ duration: 0.3 }}
+						className='bg-gray-800 rounded-xl max-w-4xl max-h-[90vh] overflow-y-auto w-full border border-gray-700'
+					>
+						<div className='p-6'>
+							<div className='flex justify-between items-center mb-6'>
+								<h3 className='text-2xl font-bold text-gray-100'>
+									Request Details - {selectedRequest.request_id}
+								</h3>
+								<button
+									onClick={handleCloseDetails}
+									className='text-gray-400 hover:text-gray-300 text-2xl'
+								>
+									×
+								</button>
+							</div>
+							
+							<div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
+								{/* Contact Information */}
+								<div className='bg-gray-700/50 rounded-lg p-4'>
+									<h4 className='font-semibold text-gray-100 mb-3 flex items-center'>
+										<User className='w-5 h-5 mr-2' />
+										Contact Information
+									</h4>
+									<div className='space-y-3'>
+										<div className='flex items-center'>
+											<User className='w-4 h-4 text-gray-400 mr-2' />
+											<span className='text-gray-300'>{selectedRequest.contact_name}</span>
+										</div>
+										<div className='flex items-center'>
+											<Phone className='w-4 h-4 text-gray-400 mr-2' />
+											<span className='text-gray-300'>{selectedRequest.contact_phone}</span>
+										</div>
+										<div className='flex items-center'>
+											<Mail className='w-4 h-4 text-gray-400 mr-2' />
+											<span className='text-gray-300'>{selectedRequest.contact_email}</span>
+										</div>
+										<div className='flex items-center'>
+											<Package className='w-4 h-4 text-gray-400 mr-2' />
+											<span className='text-gray-300'>{selectedRequest.department}</span>
+										</div>
+									</div>
 								</div>
 								
-								<div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-6'>
-									{/* Contact Information */}
-									<div className='bg-gray-700/50 rounded-lg p-4'>
-										<h4 className='font-semibold text-gray-100 mb-3 flex items-center'>
-											<User className='w-5 h-5 mr-2' />
-											Contact Information
-										</h4>
-										<div className='space-y-3'>
-											<div className='flex items-center'>
-												<User className='w-4 h-4 text-gray-400 mr-2' />
-												<span className='text-gray-300'>{selectedRequest.contact_name}</span>
-											</div>
-											<div className='flex items-center'>
-												<Phone className='w-4 h-4 text-gray-400 mr-2' />
-												<span className='text-gray-300'>{selectedRequest.contact_phone}</span>
-											</div>
-											<div className='flex items-center'>
-												<Mail className='w-4 h-4 text-gray-400 mr-2' />
-												<span className='text-gray-300'>{selectedRequest.contact_email}</span>
-											</div>
-											<div className='flex items-center'>
-												<Package className='w-4 h-4 text-gray-400 mr-2' />
-												<span className='text-gray-300'>{selectedRequest.department}</span>
-											</div>
-										</div>
-									</div>
-									
-									{/* Pickup Information */}
-									<div className='bg-gray-700/50 rounded-lg p-4'>
-										<h4 className='font-semibold text-gray-100 mb-3 flex items-center'>
-											<MapPin className='w-5 h-5 mr-2' />
-											Pickup Information
-										</h4>
-										<div className='space-y-3'>
-											<div className='flex items-start'>
-												<MapPin className='w-4 h-4 text-gray-400 mr-2 mt-1' />
-												<span className='text-gray-300'>{selectedRequest.pickup_address}</span>
-											</div>
-											{selectedRequest.preferred_date && (
-												<div className='flex items-center'>
-													<Calendar className='w-4 h-4 text-gray-400 mr-2' />
-													<span className='text-gray-300'>
-														Preferred: {formatDate(selectedRequest.preferred_date)}
-													</span>
-												</div>
-											)}
-											{selectedRequest.preferred_time_slot && (
-												<div className='flex items-center'>
-													<Clock className='w-4 h-4 text-gray-400 mr-2' />
-													<span className='text-gray-300'>{selectedRequest.preferred_time_slot}</span>
-												</div>
-											)}
-										</div>
-									</div>
-								</div>
-
-								{/* E-Waste Details */}
-								<div className='bg-gray-700/50 rounded-lg p-4 mb-6'>
+								{/* Pickup Information */}
+								<div className='bg-gray-700/50 rounded-lg p-4'>
 									<h4 className='font-semibold text-gray-100 mb-3 flex items-center'>
-										<FileText className='w-5 h-5 mr-2' />
-										E-Waste Details
+										<MapPin className='w-5 h-5 mr-2' />
+										Pickup Information
 									</h4>
-									<p className='text-gray-300 mb-4'>{selectedRequest.e_waste_description}</p>
-									<div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-										<div>
-											<span className='text-gray-400 text-sm'>Weight:</span>
-											<p className='text-gray-100'>{selectedRequest.weight_kg ? `${selectedRequest.weight_kg} kg` : 'N/A'}</p>
+									<div className='space-y-3'>
+										<div className='flex items-start'>
+											<MapPin className='w-4 h-4 text-gray-400 mr-2 mt-1' />
+											<span className='text-gray-300'>{selectedRequest.pickup_address}</span>
 										</div>
-										<div>
-											<span className='text-gray-400 text-sm'>Items:</span>
-											<p className='text-gray-100'>{selectedRequest.item_count || 'N/A'}</p>
-										</div>
-										<div>
-											<span className='text-gray-400 text-sm'>Estimated Value:</span>
-											<p className='text-gray-100'>{selectedRequest.estimated_value ? `$${selectedRequest.estimated_value}` : 'N/A'}</p>
-										</div>
-										<div>
-											<span className='text-gray-400 text-sm'>Status:</span>
-											<p className='text-gray-100'>{getStatusLabel(selectedRequest.status)}</p>
-										</div>
+										{selectedRequest.preferred_date && (
+											<div className='flex items-center'>
+												<Calendar className='w-4 h-4 text-gray-400 mr-2' />
+												<span className='text-gray-300'>
+													Preferred: {formatDate(selectedRequest.preferred_date)}
+												</span>
+											</div>
+										)}
+										{selectedRequest.preferred_time_slot && (
+											<div className='flex items-center'>
+												<Clock className='w-4 h-4 text-gray-400 mr-2' />
+												<span className='text-gray-300'>{selectedRequest.preferred_time_slot}</span>
+											</div>
+										)}
 									</div>
-								</div>
-
-								{/* Additional Notes */}
-								{selectedRequest.additional_notes && (
-									<div className='bg-gray-700/50 rounded-lg p-4 mb-6'>
-										<h4 className='font-semibold text-gray-100 mb-3'>Additional Notes</h4>
-										<p className='text-gray-300'>{selectedRequest.additional_notes}</p>
-									</div>
-								)}
-
-								{/* Vendor Notes */}
-								{selectedRequest.vendor_notes && (
-									<div className='bg-gray-700/50 rounded-lg p-4 mb-6'>
-										<h4 className='font-semibold text-gray-100 mb-3'>Vendor Notes</h4>
-										<p className='text-gray-300'>{selectedRequest.vendor_notes}</p>
-									</div>
-								)}
-
-								{/* Action Buttons */}
-								<div className='flex justify-end space-x-4'>
-									<button
-										onClick={handleCloseDetails}
-										className='px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors'
-										disabled={actionLoading}
-									>
-										Close
-									</button>
-									
-									{selectedRequest.status === 'pending' && (
-										<>
-											<button
-												onClick={() => handleRequestAction(selectedRequest.request_id, 'rejected', 'Request rejected by admin')}
-												className='px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors'
-												disabled={actionLoading}
-											>
-												{actionLoading ? 'Processing...' : 'Reject'}
-											</button>
-											<button
-												onClick={() => handleRequestAction(selectedRequest.request_id, 'approved', 'Request approved by admin')}
-												className='px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors'
-												disabled={actionLoading}
-											>
-												{actionLoading ? 'Processing...' : 'Accept'}
-											</button>
-										</>
-									)}
 								</div>
 							</div>
-						</motion.div>
-					</div>
-				)}
 
-				{/* Quick Actions */}
-				<motion.div
-					className='mt-8 grid grid-cols-1 md:grid-cols-2 gap-6'
-					initial={{ opacity: 0, y: 20 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ duration: 0.5, delay: 0.4 }}
-				>
-					<div className='bg-gray-800 bg-opacity-50 backdrop-blur-md shadow-lg rounded-xl p-6 border border-gray-700'>
-						<h3 className='text-lg font-semibold text-gray-100 mb-3'>User Management</h3>
-						<p className='text-gray-400 mb-4'>Manage system users, roles, and permissions</p>
-						<a
-							href='/users'
-							className='inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
-						>
-							Manage Users
-						</a>
-					</div>
+							{/* E-Waste Details */}
+							<div className='bg-gray-700/50 rounded-lg p-4 mb-6'>
+								<h4 className='font-semibold text-gray-100 mb-3 flex items-center'>
+									<FileText className='w-5 h-5 mr-2' />
+									E-Waste Details
+								</h4>
+								<p className='text-gray-300 mb-4'>{selectedRequest.e_waste_description}</p>
+								<div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+									<div>
+										<span className='text-gray-400 text-sm'>Weight:</span>
+										<p className='text-gray-100'>{selectedRequest.weight_kg ? `${selectedRequest.weight_kg} kg` : 'N/A'}</p>
+									</div>
+									<div>
+										<span className='text-gray-400 text-sm'>Items:</span>
+										<p className='text-gray-100'>{selectedRequest.item_count || 'N/A'}</p>
+									</div>
+									<div>
+										<span className='text-gray-400 text-sm'>Estimated Value:</span>
+										<p className='text-gray-100'>{selectedRequest.estimated_value ? `$${selectedRequest.estimated_value}` : 'N/A'}</p>
+									</div>
+									<div>
+										<span className='text-gray-400 text-sm'>Status:</span>
+										<p className='text-gray-100'>{getStatusLabel(selectedRequest.status)}</p>
+									</div>
+								</div>
+							</div>
 
-					<div className='bg-gray-800 bg-opacity-50 backdrop-blur-md shadow-lg rounded-xl p-6 border border-gray-700'>
-						<h3 className='text-lg font-semibold text-gray-100 mb-3'>Products & Services</h3>
-						<p className='text-gray-400 mb-4'>Configure disposal services and pricing</p>
-						<a
-							href='/products'
-							className='inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors'
-						>
-							Manage Products
-						</a>
-					</div>
-				</motion.div>
-			</main>
+							{/* Additional Notes */}
+							{selectedRequest.additional_notes && (
+								<div className='bg-gray-700/50 rounded-lg p-4 mb-6'>
+									<h4 className='font-semibold text-gray-100 mb-3'>Additional Notes</h4>
+									<p className='text-gray-300'>{selectedRequest.additional_notes}</p>
+								</div>
+							)}
+
+							{/* Vendor Notes */}
+							{selectedRequest.vendor_notes && (
+								<div className='bg-gray-700/50 rounded-lg p-4 mb-6'>
+									<h4 className='font-semibold text-gray-100 mb-3'>Vendor Notes</h4>
+									<p className='text-gray-300'>{selectedRequest.vendor_notes}</p>
+								</div>
+							)}
+
+							{/* Action Buttons */}
+							<div className='flex justify-end space-x-4'>
+								<button
+									onClick={handleCloseDetails}
+									className='px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors'
+									disabled={actionLoading}
+								>
+									Close
+								</button>
+								
+								{selectedRequest.status === 'pending' && (
+									<>
+										<button
+											onClick={() => handleRequestAction(selectedRequest.request_id, 'rejected', 'Request rejected by admin')}
+											className='px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors'
+											disabled={actionLoading}
+										>
+											{actionLoading ? 'Processing...' : 'Reject'}
+										</button>
+										<button
+											onClick={() => handleRequestAction(selectedRequest.request_id, 'approved', 'Request approved by admin')}
+											className='px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors'
+											disabled={actionLoading}
+										>
+											{actionLoading ? 'Processing...' : 'Accept'}
+										</button>
+									</>
+								)}
+							</div>
+						</div>
+					</motion.div>
+				</div>
+			)}
 		</div>
 	);
 };

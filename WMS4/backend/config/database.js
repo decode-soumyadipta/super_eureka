@@ -124,17 +124,33 @@ const initializeDatabase = async () => {
                 preferred_time_slot VARCHAR(50),
                 additional_notes TEXT,
                 estimated_value DECIMAL(12, 2),
-                status ENUM('pending', 'approved', 'rejected', 'completed', 'in_progress', 'cancelled') DEFAULT 'pending',
+                status ENUM('pending', 'approved', 'pickup_scheduled', 'out_for_pickup', 'pickup_completed', 'rejected', 'completed', 'in_progress', 'cancelled') DEFAULT 'pending',
+                pickup_datetime DATETIME NULL,
                 vendor_notes TEXT,
                 created_by INT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_request_id (request_id),
+                INDEX idx_status (status),
+                INDEX idx_pickup_datetime (pickup_datetime),
+                INDEX idx_created_at (created_at)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `);
         
         if (createDisposalTableResult.success) {
             console.log('✅ DATABASE: disposal_requests table ready');
         }
+
+        // Add pickup_datetime column if it doesn't exist (for existing databases)
+        console.log('🔄 DATABASE: Adding pickup_datetime column if missing...');
+        await executeQuery(`
+            ALTER TABLE disposal_requests 
+            ADD COLUMN IF NOT EXISTS pickup_datetime DATETIME NULL 
+            AFTER status;
+        `).catch(() => {
+            // Column might already exist, ignore error
+            console.log('ℹ️ DATABASE: pickup_datetime column already exists or couldn\'t be added');
+        });
 
         // Add estimated_value column if it doesn't exist (for existing databases)
         console.log('🔄 DATABASE: Adding estimated_value column if missing...');

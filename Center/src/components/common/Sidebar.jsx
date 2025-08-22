@@ -1,4 +1,4 @@
-import { BarChart2, Package, Menu, Users, LogOut } from "lucide-react";
+import { BarChart2, Package, Calendar, Menu, LogOut } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
@@ -11,16 +11,16 @@ const SIDEBAR_ITEMS = [
 		href: "/",
 	},
 	{ 
-		name: "Users", 
-		icon: Users, 
-		color: "#EC4899", 
-		href: "/users" 
-	},
-	{ 
-		name: "Services", 
+		name: "Manage Approved Requests", 
 		icon: Package, 
 		color: "#10B981", 
-		href: "/products" 
+		href: "/approved-requests" 
+	},
+	{ 
+		name: "Manage Scheduled Requests", 
+		icon: Calendar, 
+		color: "#F59E0B", 
+		href: "/scheduled-requests" 
 	}
 ];
 

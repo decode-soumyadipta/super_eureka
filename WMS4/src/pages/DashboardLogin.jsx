@@ -9,7 +9,7 @@ const DashboardLogin = () => {
       {/* Logo image placeholder above the login form */}
       <div className={styles.logoWrapper}>
         <img
-          src="/path/to/logo.png" // Update this path later
+          src="logo.png" // Update this path later
           alt="Logo"
           className={styles.logoImg}
         />

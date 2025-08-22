@@ -32,7 +32,8 @@ export const disposalService = {
         item_count: requestData.selectedDevices?.length || requestData.item_count || 1,
         preferred_date: requestData.preferredDate || requestData.preferred_date || null,
         preferred_time_slot: requestData.preferredTimeSlot || requestData.preferred_time_slot || null,
-        additional_notes: requestData.specialInstructions || requestData.additional_notes || null
+        additional_notes: requestData.specialInstructions || requestData.additional_notes || null,
+        estimated_value: requestData.estimated_value || null
       };
 
       console.log('🔄 FRONTEND: Transformed backend data:', JSON.stringify(backendData, null, 2));

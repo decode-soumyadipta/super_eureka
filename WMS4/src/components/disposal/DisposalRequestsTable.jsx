@@ -65,8 +65,8 @@ function DisposalRequestsTable({ requests, loading, onViewRequest }) {
     // Search by ID, department, or description
     if (searchTerm && !( 
       request.request_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.department_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      request.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.e_waste_description?.toLowerCase().includes(searchTerm.toLowerCase())
     )) {
       return false;
     }
@@ -214,16 +214,16 @@ function DisposalRequestsTable({ requests, loading, onViewRequest }) {
                     {request.request_id}
                   </TableCell>
                   <TableCell>{formatDate(request.created_at)}</TableCell>
-                  <TableCell>{request.department_name || 'N/A'}</TableCell>
+                  <TableCell>{request.department || 'N/A'}</TableCell>
                   <TableCell>
-                    {request.description ? 
-                      (request.description.length > 50 
-                        ? `${request.description.substring(0, 50)}...` 
-                        : request.description) 
+                    {request.e_waste_description ? 
+                      (request.e_waste_description.length > 50 
+                        ? `${request.e_waste_description.substring(0, 50)}...` 
+                        : request.e_waste_description) 
                       : 'N/A'}
                   </TableCell>
-                  <TableCell align="center">{request.e_waste_item_count || 'N/A'}</TableCell>
-                  <TableCell align="center">{request.e_waste_weight || 'N/A'}</TableCell>
+                  <TableCell align="center">{request.item_count || 'N/A'}</TableCell>
+                  <TableCell align="center">{request.weight_kg ? `${request.weight_kg} kg` : 'N/A'}</TableCell>
                   <TableCell>
                     <Chip 
                       label={request.status?.charAt(0).toUpperCase() + request.status?.slice(1).replace('_', ' ')} 

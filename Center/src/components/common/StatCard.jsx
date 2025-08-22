@@ -2,7 +2,13 @@ import { motion } from "framer-motion";
 
 const StatCard = ({ name, icon: Icon, value, color }) => {
 	// Check if this card should have white film overlay
-	const hasWhiteFilm = ['Total Requests', 'Pending Review', 'Scheduled Pickups', 'Completed Pickups'].includes(name);
+	const hasWhiteFilm = [
+		'Total Requests', 'Pending Review', 'Scheduled Pickups', 'Completed Pickups',
+		'Total Users', 'Active Users', 'Admin Users', 'Vendor Users',
+		'Total Services', 'Active Services', 'Completed Services', 'Pending Services',
+		'Service Requests', 'Service Orders', 'Service Revenue', 'Service Rating',
+		'Pending Requests', 'Completed Requests'
+	].includes(name);
 
 	return (
 		<motion.div

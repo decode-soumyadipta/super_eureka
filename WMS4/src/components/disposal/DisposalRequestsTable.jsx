@@ -32,6 +32,9 @@ const statusColors = {
   approved: 'info',
   in_progress: 'primary',
   completed: 'success',
+  pickup_scheduled: 'info',
+  out_for_pickup: 'warning',
+  pickup_completed: 'success',
   rejected: 'error',
   cancelled: 'default'
 };
@@ -235,7 +238,21 @@ function DisposalRequestsTable({ requests, loading, onViewRequest }) {
                     <IconButton
                       size="small"
                       color="primary"
-                      onClick={() => onViewRequest(request.request_id)}
+                      onClick={() => {
+                        console.log('🔍 Viewing request:', {
+                          request_id: request.request_id,
+                          id: request.id,
+                          full_request: request
+                        });
+                        // Use either request_id or id, whichever is available
+                        const requestId = request.request_id || request.id;
+                        if (requestId) {
+                          onViewRequest(requestId);
+                        } else {
+                          console.error('❌ No valid ID found for request:', request);
+                          alert('Error: This request does not have a valid ID');
+                        }
+                      }}
                       title="View details"
                     >
                       <VisibilityIcon />

@@ -413,6 +413,8 @@ app.get('/api/vendor/disposal-requests', authenticateToken, async (req, res) => 
             });
         }
 
+        console.log('🔄 Fetching all disposal requests...');
+
         const { executeQuery } = await import('./config/database.js');
         
         const result = await executeQuery(`
@@ -421,10 +423,38 @@ app.get('/api/vendor/disposal-requests', authenticateToken, async (req, res) => 
         `);
 
         if (!result.success) {
+            console.error('❌ Failed to fetch disposal requests:', result.error);
             return res.status(500).json({
                 success: false,
                 message: 'Failed to fetch disposal requests'
             });
+        }
+
+        console.log(`📋 Found ${result.data.length} disposal requests`);
+        console.log('📊 Request statuses breakdown:', 
+            result.data.reduce((acc, req) => {
+                acc[req.status] = (acc[req.status] || 0) + 1;
+                return acc;
+            }, {})
+        );
+
+        // Log scheduled requests specifically
+        const scheduledRequests = result.data.filter(r => 
+            r.status === 'pickup_scheduled' || 
+            r.status === 'out_for_pickup' || 
+            r.status === 'pickup_completed'
+        );
+        
+        console.log(`🎯 Scheduled requests found: ${scheduledRequests.length}`);
+        if (scheduledRequests.length > 0) {
+            console.log('📝 Scheduled requests details:', 
+                scheduledRequests.map(r => ({
+                    id: r.request_id,
+                    status: r.status,
+                    pickup_datetime: r.pickup_datetime,
+                    department: r.department
+                }))
+            );
         }
 
         res.json({
@@ -433,7 +463,7 @@ app.get('/api/vendor/disposal-requests', authenticateToken, async (req, res) => 
         });
 
     } catch (error) {
-        console.error('Vendor disposal requests fetch error:', error);
+        console.error('❌ Vendor disposal requests fetch error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch disposal requests'
@@ -455,6 +485,13 @@ app.put('/api/vendor/disposal-requests/:requestId/respond', authenticateToken, a
         const { requestId } = req.params;
         const { status, pickup_datetime } = req.body;
 
+        console.log(`🔄 Processing disposal request update:`, {
+            requestId,
+            status,
+            pickup_datetime,
+            user: req.user.name
+        });
+
         // Validate status value
         const validStatuses = ['pending', 'approved', 'pickup_scheduled', 'out_for_pickup', 'pickup_completed', 'rejected', 'cancelled'];
         if (!validStatuses.includes(status)) {
@@ -466,6 +503,23 @@ app.put('/api/vendor/disposal-requests/:requestId/respond', authenticateToken, a
 
         const { executeQuery } = await import('./config/database.js');
 
+        // First, get the current request to verify it exists
+        const currentRequest = await executeQuery(`
+            SELECT * FROM disposal_requests 
+            WHERE request_id = ? OR id = ?
+        `, [requestId, requestId]);
+
+        if (!currentRequest.success || currentRequest.data.length === 0) {
+            console.log(`❌ Disposal request not found: ${requestId}`);
+            return res.status(404).json({
+                success: false,
+                message: 'Disposal request not found'
+            });
+        }
+
+        const request = currentRequest.data[0];
+        console.log(`📋 Current request status: ${request.status}`);
+
         // Update the disposal request
         let updateFields = ['status = ?', 'updated_at = CURRENT_TIMESTAMP'];
         let updateValues = [status];
@@ -473,21 +527,49 @@ app.put('/api/vendor/disposal-requests/:requestId/respond', authenticateToken, a
         if (pickup_datetime && status === 'pickup_scheduled') {
             updateFields.push('pickup_datetime = ?');
             updateValues.push(pickup_datetime);
+            console.log(`🗓️ Setting pickup datetime: ${pickup_datetime}`);
         }
 
         updateValues.push(requestId, requestId);
 
-        const updateResult = await executeQuery(`
+        const updateQuery = `
             UPDATE disposal_requests 
             SET ${updateFields.join(', ')}
             WHERE request_id = ? OR id = ?
-        `, updateValues);
+        `;
+
+        console.log(`🔄 Executing update query:`, updateQuery);
+        console.log(`📋 Update values:`, updateValues);
+
+        const updateResult = await executeQuery(updateQuery, updateValues);
 
         if (!updateResult.success) {
+            console.error(`❌ Failed to update disposal request:`, updateResult.error);
             return res.status(500).json({
                 success: false,
                 message: 'Failed to update disposal request'
             });
+        }
+
+        console.log(`✅ Updated disposal request ${requestId} to status: ${status}`);
+
+        // Verify the update by fetching the updated record
+        const verifyResult = await executeQuery(`
+            SELECT request_id, status, pickup_datetime, department, contact_name FROM disposal_requests 
+            WHERE request_id = ? OR id = ?
+        `, [requestId, requestId]);
+
+        if (verifyResult.success && verifyResult.data.length > 0) {
+            const updatedRequest = verifyResult.data[0];
+            console.log(`✅ Verification - Updated request:`, {
+                request_id: updatedRequest.request_id,
+                status: updatedRequest.status,
+                pickup_datetime: updatedRequest.pickup_datetime,
+                department: updatedRequest.department,
+                contact_name: updatedRequest.contact_name
+            });
+        } else {
+            console.log(`❌ Verification failed - could not retrieve updated request`);
         }
 
         res.json({
@@ -495,12 +577,13 @@ app.put('/api/vendor/disposal-requests/:requestId/respond', authenticateToken, a
             message: `Disposal request ${status} successfully`,
             data: {
                 request_id: requestId,
-                status: status
+                status: status,
+                pickup_datetime: pickup_datetime || null
             }
         });
 
     } catch (error) {
-        console.error('Vendor disposal request response error:', error);
+        console.error('❌ Vendor disposal request response error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to process vendor response'

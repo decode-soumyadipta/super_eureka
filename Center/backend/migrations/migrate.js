@@ -32,6 +32,38 @@ export const createTables = async () => {
             } else {
                 console.log('✅ pickup_datetime column already exists');
             }
+
+            // Fix the status ENUM to include all required values
+            console.log('🔄 Updating status ENUM values to include pickup scheduling statuses...');
+            await executeQuery(`
+                ALTER TABLE disposal_requests 
+                MODIFY COLUMN status ENUM(
+                    'pending', 
+                    'approved', 
+                    'pickup_scheduled', 
+                    'out_for_pickup', 
+                    'pickup_completed', 
+                    'rejected', 
+                    'cancelled', 
+                    'in_progress', 
+                    'completed'
+                ) DEFAULT 'pending'
+            `);
+            console.log('✅ Status ENUM values updated successfully');
+
+            // Verify the table structure
+            const tableStructure = await executeQuery(`
+                DESCRIBE disposal_requests
+            `);
+            if (tableStructure.success) {
+                console.log('📋 Current disposal_requests table structure:');
+                tableStructure.data.forEach(column => {
+                    if (column.Field === 'status' || column.Field === 'pickup_datetime') {
+                        console.log(`   ${column.Field}: ${column.Type} (${column.Default})`);
+                    }
+                });
+            }
+
         } catch (alterError) {
             console.log('Note: Could not check/add pickup_datetime column, will be created with new table');
         }

@@ -19,6 +19,8 @@ const ScheduledRequestsPage = () => {
 			setLoading(true);
 			setError(null);
 			
+			console.log('🔄 ScheduledRequestsPage: Fetching scheduled requests...');
+			
 			const token = localStorage.getItem('token');
 			if (!token) {
 				setError('No authentication token found');
@@ -40,13 +42,24 @@ const ScheduledRequestsPage = () => {
 			const data = await response.json();
 			
 			if (data.success) {
+				console.log('📋 ScheduledRequestsPage: All disposal requests received:', data.data.requests?.length || 0);
+				console.log('📊 ScheduledRequestsPage: Request statuses:', 
+					data.data.requests?.map(r => ({ id: r.request_id, status: r.status, pickup_datetime: r.pickup_datetime })) || []
+				);
+
 				// Filter only scheduled requests and sort by pickup_datetime
 				const scheduledRequests = (data.data.requests || [])
-					.filter(r => 
-						r.status === 'pickup_scheduled' || 
-						r.status === 'out_for_pickup' || 
-						r.status === 'pickup_completed'
-					)
+					.filter(r => {
+						const isScheduled = r.status === 'pickup_scheduled' || 
+							r.status === 'out_for_pickup' || 
+							r.status === 'pickup_completed';
+						
+						if (isScheduled) {
+							console.log(`✅ ScheduledRequestsPage: Including request ${r.request_id} (${r.status})`);
+						}
+						
+						return isScheduled;
+					})
 					.sort((a, b) => {
 						// Sort by pickup_datetime, putting null dates at the end
 						if (!a.pickup_datetime && !b.pickup_datetime) return 0;
@@ -54,12 +67,23 @@ const ScheduledRequestsPage = () => {
 						if (!b.pickup_datetime) return -1;
 						return new Date(a.pickup_datetime) - new Date(b.pickup_datetime);
 					});
+
+				console.log(`🎯 ScheduledRequestsPage: Filtered scheduled requests:`, scheduledRequests.length);
+				console.log('📝 ScheduledRequestsPage: Scheduled requests details:', 
+					scheduledRequests.map(r => ({ 
+						id: r.request_id, 
+						status: r.status, 
+						pickup_datetime: r.pickup_datetime,
+						department: r.department
+					}))
+				);
+
 				setRequests(scheduledRequests);
 			} else {
 				throw new Error(data.message || 'Failed to fetch requests');
 			}
 		} catch (err) {
-			console.error('Error fetching scheduled requests:', err);
+			console.error('❌ ScheduledRequestsPage: Error fetching scheduled requests:', err);
 			setError(err.message);
 		} finally {
 			setLoading(false);

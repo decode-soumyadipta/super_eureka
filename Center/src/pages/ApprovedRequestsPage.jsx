@@ -64,12 +64,26 @@ const ApprovedRequestsPage = () => {
 			setUpdating(prev => ({ ...prev, [requestId]: true }));
 			setError(null);
 
+			console.log('🔄 Frontend: Updating request status', {
+				requestId,
+				newStatus,
+				pickupDate,
+				timestamp: new Date().toISOString()
+			});
+
 			const token = localStorage.getItem('token');
 			const payload = { status: newStatus };
 			
 			if (pickupDate && newStatus === 'pickup_scheduled') {
 				payload.pickup_datetime = pickupDate;
+				console.log('📅 Frontend: Adding pickup datetime to payload', payload);
 			}
+
+			console.log('📤 Frontend: Sending API request', {
+				url: `/api/vendor/disposal-requests/${requestId}/respond`,
+				method: 'PUT',
+				payload
+			});
 
 			const response = await fetch(`/api/vendor/disposal-requests/${requestId}/respond`, {
 				method: 'PUT',
@@ -80,20 +94,29 @@ const ApprovedRequestsPage = () => {
 				body: JSON.stringify(payload)
 			});
 
+			console.log('📥 Frontend: Received response', {
+				status: response.status,
+				ok: response.ok
+			});
+
 			if (!response.ok) {
 				const errorData = await response.json();
+				console.error('❌ Frontend: API error response', errorData);
 				throw new Error(errorData.message || 'Failed to update status');
 			}
 
 			const data = await response.json();
+			console.log('✅ Frontend: Successful response', data);
 			
 			if (data.success) {
+				console.log('🔄 Frontend: Refreshing approved requests data...');
 				await fetchApprovedRequests(); // Refresh the data
+				console.log('✅ Frontend: Data refreshed successfully');
 			} else {
 				throw new Error(data.message || 'Failed to update status');
 			}
 		} catch (err) {
-			console.error('Error updating status:', err);
+			console.error('❌ Frontend: Error updating status:', err);
 			setError(err.message);
 		} finally {
 			setUpdating(prev => ({ ...prev, [requestId]: false }));

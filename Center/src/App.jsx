@@ -1,12 +1,17 @@
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation, Navigate } from "react-router-dom";
 
 import Sidebar from "./components/common/Sidebar";
+import ProtectedRoute from "./components/common/ProtectedRoute";
 
 import OverviewPage from "./pages/OverviewPage";
 import ProductsPage from "./pages/ProductsPage";
 import UsersPage from "./pages/UsersPage";
+import LoginPage from "./pages/LoginPage";
 
 function App() {
+	const location = useLocation();
+	const isLoginPage = location.pathname === "/login";
+
 	return (
 		<div className='flex h-screen bg-gray-900 text-gray-100 overflow-hidden'>
 			{/* BG */}
@@ -15,11 +20,37 @@ function App() {
 				<div className='absolute inset-0 backdrop-blur-sm' />
 			</div>
 
-			<Sidebar />
+			{!isLoginPage && <Sidebar />}
 			<Routes>
-				<Route path='/' element={<OverviewPage />} />
-				<Route path='/products' element={<ProductsPage />} />
-				<Route path='/users' element={<UsersPage />} />
+				{/* Public routes */}
+				<Route path="/login" element={<LoginPage />} />
+				
+				 {/* Default redirect */}
+				<Route path="/" element={
+					<ProtectedRoute>
+						<OverviewPage />
+					</ProtectedRoute>
+				} />
+				
+				{/* Protected routes */}
+				<Route path='/dashboard' element={
+					<ProtectedRoute>
+						<OverviewPage />
+					</ProtectedRoute>
+				} />
+				<Route path='/products' element={
+					<ProtectedRoute>
+						<ProductsPage />
+					</ProtectedRoute>
+				} />
+				<Route path='/users' element={
+					<ProtectedRoute>
+						<UsersPage />
+					</ProtectedRoute>
+				} />
+				
+				{/* Catch all route */}
+				<Route path="*" element={<Navigate to="/login" replace />} />
 			</Routes>
 		</div>
 	);

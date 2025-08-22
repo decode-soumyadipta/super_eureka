@@ -1,28 +1,38 @@
-import { BarChart2, DollarSign, Menu, QrCode, Settings, ShoppingBag, ShoppingCart, TrendingUp, Users } from "lucide-react";
+import { BarChart2, Package, Menu, Users, LogOut } from "lucide-react";
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const SIDEBAR_ITEMS = [
 	{
-		name: "Overview",
+		name: "Dashboard",
 		icon: BarChart2,
 		color: "#6366f1",
 		href: "/",
 	},
-	{ name: "Repairs", icon: ShoppingBag, color: "#8B5CF6", href: "/products" },
-	{ name: "Users", icon: Users, color: "#EC4899", href: "/users" },
 	{ 
-		name: "QR", 
-		icon: QrCode, 
-		color: "#3B82F6", 
-		href: "http://localhost:3000"
+		name: "Users", 
+		icon: Users, 
+		color: "#EC4899", 
+		href: "/users" 
+	},
+	{ 
+		name: "Services", 
+		icon: Package, 
+		color: "#10B981", 
+		href: "/products" 
 	}
-
 ];
 
 const Sidebar = () => {
 	const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+	const navigate = useNavigate();
+
+	const handleLogout = () => {
+		localStorage.removeItem('token');
+		localStorage.removeItem('user');
+		navigate('/login');
+	};
 
 	return (
 		<motion.div
@@ -63,6 +73,29 @@ const Sidebar = () => {
 						</Link>
 					))}
 				</nav>
+
+				{/* Logout Button */}
+				<motion.button
+					onClick={handleLogout}
+					className='flex items-center p-4 text-sm font-medium rounded-lg hover:bg-red-600 transition-colors mt-4'
+					whileHover={{ scale: 1.02 }}
+					whileTap={{ scale: 0.98 }}
+				>
+					<LogOut size={20} style={{ color: "#EF4444", minWidth: "20px" }} />
+					<AnimatePresence>
+						{isSidebarOpen && (
+							<motion.span
+								className='ml-4 whitespace-nowrap text-red-400'
+								initial={{ opacity: 0, width: 0 }}
+								animate={{ opacity: 1, width: "auto" }}
+								exit={{ opacity: 0, width: 0 }}
+								transition={{ duration: 0.2, delay: 0.3 }}
+							>
+								Logout
+							</motion.span>
+						)}
+					</AnimatePresence>
+				</motion.button>
 			</div>
 		</motion.div>
 	);

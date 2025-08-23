@@ -1,4 +1,4 @@
-import { BarChart2, ShoppingBag, Users, Zap, AlertTriangle, TrendingUp, Clipboard, Calendar, Tag, BarChart } from "lucide-react";
+import { BarChart2, ShoppingBag, Zap, AlertTriangle, TrendingUp, Tag, BarChart, Recycle, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 
@@ -7,98 +7,72 @@ import StatCard from "../components/common/StatCard";
 import SalesOverviewChart from "../components/overview/SalesOverviewChart";
 import CategoryDistributionChart from "../components/overview/CategoryDistributionChart";
 import SalesChannelChart from "../components/overview/SalesChannelChart";
-import { deviceService } from "../services/deviceService.js";
+import DisposalAnalyticsChart from "../components/analytics/DisposalAnalyticsChart";
+import CommunityIPFSChart from "../components/analytics/CommunityIPFSChart";
+import { analyticsService } from "../services/analyticsService.js";
 import { authService } from "../services/authService.js";
 
 const HOverviewPage = () => {
-	const [stats, setStats] = useState(null);
+	const [analytics, setAnalytics] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
 	const [user, setUser] = useState(null);
-	const [recentActivity, setRecentActivity] = useState([]);
 
 	useEffect(() => {
 		const currentUser = authService.getCurrentUser();
 		setUser(currentUser);
-		fetchStats();
+		fetchAnalytics();
 	}, []);
 
-	const fetchStats = async () => {
+	const fetchAnalytics = async () => {
 		try {
 			setLoading(true);
 			setError(null);
-			const response = await deviceService.getDepartmentStats();
+			console.log('🔄 HOD Dashboard: Fetching comprehensive analytics...');
+			
+			const response = await analyticsService.getDashboardAnalytics();
 			
 			if (response.success) {
-				console.log('Stats data:', response.data);
-				setStats(response.data);
-				
-				// Extract recent activity if available
-				if (response.data.recent_activity && response.data.recent_activity.length > 0) {
-					setRecentActivity(response.data.recent_activity);
-				}
+				console.log('✅ HOD Dashboard: Analytics loaded successfully:', response.data);
+				setAnalytics(response.data);
 			} else {
-				setError('Failed to fetch statistics');
+				setError('Failed to fetch analytics data');
 			}
 		} catch (err) {
-			console.error('Stats fetch error:', err);
-			setError(err.message || 'Failed to fetch statistics');
+			console.error('❌ HOD Dashboard: Analytics fetch error:', err);
+			setError(err.message || 'Failed to fetch analytics data');
 		} finally {
 			setLoading(false);
 		}
 	};
 
-	// Calculate derived stats from fetched data
+	// Calculate derived metrics from analytics data
 	const getConditionPercentage = (condition) => {
-		if (!stats || !stats.condition_breakdown) return 0;
+		if (!analytics || !analytics.condition_breakdown) return 0;
 		
-		const conditionItem = stats.condition_breakdown.find(
+		const conditionItem = analytics.condition_breakdown.find(
 			item => item.condition_status === condition
 		);
 		
 		if (!conditionItem) return 0;
 		
-		const totalDevices = stats.total_devices || 1; // Avoid division by zero
+		const totalDevices = analytics.overview.total_devices || 1;
 		return ((conditionItem.count / totalDevices) * 100).toFixed(1);
 	};
 
-	const getRecentDevicesCount = () => {
-		if (!stats) return 0;
-		return stats.recent_registrations || 0;
-	};
-
-	const getNeedsAttentionCount = () => {
-		if (!stats || !stats.condition_breakdown) return 0;
-		
-		const poorCondition = stats.condition_breakdown.find(
-			item => item.condition_status === 'poor'
-		);
-		
-		const damagedCondition = stats.condition_breakdown.find(
-			item => item.condition_status === 'damaged'
-		);
-		
-		const poor = poorCondition ? poorCondition.count : 0;
-		const damaged = damagedCondition ? damagedCondition.count : 0;
-		
-		return poor + damaged;
-	};
-	
-	// Calculate number of devices by condition
 	const getConditionCount = (condition) => {
-		if (!stats || !stats.condition_breakdown) return 0;
+		if (!analytics || !analytics.condition_breakdown) return 0;
 		
-		const conditionItem = stats.condition_breakdown.find(
+		const conditionItem = analytics.condition_breakdown.find(
 			item => item.condition_status === condition
 		);
 		
 		return conditionItem ? conditionItem.count : 0;
 	};
 
-	// Get the number of unique device types
 	const getUniqueDeviceTypesCount = () => {
-		if (!stats || !stats.device_types) return 0;
-		return stats.device_types.length;
+		if (!analytics || !analytics.device_types) return 0;
+		return analytics.device_types.length;
 	};
 
 	if (loading) {
@@ -109,7 +83,7 @@ const HOverviewPage = () => {
 					<div className="flex items-center justify-center h-64">
 						<div className="text-center">
 							<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto"></div>
-							<p className="mt-4 text-secondary-600">Loading dashboard...</p>
+							<p className="mt-4 text-secondary-600">Loading comprehensive dashboard...</p>
 						</div>
 					</div>
 				</main>
@@ -128,7 +102,7 @@ const HOverviewPage = () => {
 							<p className="text-lg font-semibold">Error Loading Dashboard</p>
 							<p className="text-sm mt-2">{error}</p>
 							<button 
-								onClick={fetchStats}
+								onClick={fetchAnalytics}
 								className="mt-4 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600"
 							>
 								Retry
@@ -142,7 +116,7 @@ const HOverviewPage = () => {
 
 	return (
 		<div className='flex-1 overflow-auto relative z-10'>
-			<Header title={`Dashboard - ${user?.department || 'Department'}`} />
+			<Header title={`E-Waste Management Dashboard - ${analytics?.overview?.department || 'Department'}`} />
 
 			<main className='max-w-7xl mx-auto py-6 px-4 lg:px-8'>
 				{/* WELCOME MESSAGE */}
@@ -156,11 +130,11 @@ const HOverviewPage = () => {
 						Welcome back, {user?.name}!
 					</h2>
 					<p className="text-secondary-600">
-						Here's an overview of your department's device management activity.
+						Comprehensive overview of your department's device management and sustainability metrics.
 					</p>
 				</motion.div>
 
-				{/* STATS */}
+				{/* PRIMARY STATS */}
 				<motion.div
 					className='grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8'
 					initial={{ opacity: 0, y: 20 }}
@@ -170,7 +144,7 @@ const HOverviewPage = () => {
 					<StatCard 
 						name='Total Devices' 
 						icon={ShoppingBag} 
-						value={stats?.total_devices?.toLocaleString() || '0'} 
+						value={analyticsService.formatNumber(analytics?.overview?.total_devices || 0)} 
 						color='#4caf50' 
 					/>
 					<StatCard 
@@ -180,22 +154,22 @@ const HOverviewPage = () => {
 						color='#45a049' 
 					/>
 					<StatCard 
-						name='Needs Attention' 
+						name='Maintenance Needed' 
 						icon={AlertTriangle} 
-						value={getNeedsAttentionCount()} 
+						value={analytics?.overview?.maintenance_needed || 0} 
 						color='#f44336' 
 					/>
 					<StatCard 
 						name='Recent (7 days)' 
 						icon={TrendingUp} 
-						value={getRecentDevicesCount()} 
+						value={analytics?.overview?.recent_registrations || 0} 
 						color='#2196f3' 
 					/>
 				</motion.div>
 
-				{/* ADDITIONAL STATS ROW */}
+				{/* SECONDARY STATS */}
 				<motion.div
-					className='grid grid-cols-1 gap-5 sm:grid-cols-3 mb-8'
+					className='grid grid-cols-1 gap-5 sm:grid-cols-4 mb-8'
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 1, delay: 0.2 }}
@@ -218,71 +192,118 @@ const HOverviewPage = () => {
 						value={getUniqueDeviceTypesCount()} 
 						color='#9c27b0' 
 					/>
+					<StatCard 
+						name='Disposal Efficiency' 
+						icon={Recycle} 
+						value={`${analytics?.overview?.disposal_efficiency || 0}%`} 
+						color='#4caf50' 
+					/>
 				</motion.div>
 
-				{/* QUICK INSIGHTS */}
+				{/* SUSTAINABILITY INSIGHTS */}
 				<motion.div
 					className="mb-8 bg-white bg-opacity-90 backdrop-blur-md shadow-lg rounded-xl border border-primary-200 p-6"
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.5, delay: 0.3 }}
 				>
-					<h3 className="text-lg font-semibold text-primary-800 mb-4">Quick Insights</h3>
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+					<h3 className="text-lg font-semibold text-primary-800 mb-4">📊 Sustainability Insights</h3>
+					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 						<div className="bg-green-50 p-4 rounded-lg">
-							<p className="text-green-800 font-medium">Device Health</p>
-							<p className="text-sm text-green-600 mt-1">
+							<div className="flex items-center mb-2">
+								<Zap className="w-5 h-5 text-green-600 mr-2" />
+								<p className="text-green-800 font-medium">Device Health</p>
+							</div>
+							<p className="text-sm text-green-600">
 								{getConditionPercentage('excellent')}% of devices are in excellent condition
 							</p>
 						</div>
 						<div className="bg-blue-50 p-4 rounded-lg">
-							<p className="text-blue-800 font-medium">Recent Activity</p>
-							<p className="text-sm text-blue-600 mt-1">
-								{getRecentDevicesCount()} devices registered this week
+							<div className="flex items-center mb-2">
+								<TrendingUp className="w-5 h-5 text-blue-600 mr-2" />
+								<p className="text-blue-800 font-medium">Recent Activity</p>
+							</div>
+							<p className="text-sm text-blue-600">
+								{analytics?.overview?.recent_registrations || 0} devices registered this week
 							</p>
 						</div>
 						<div className="bg-orange-50 p-4 rounded-lg">
-							<p className="text-orange-800 font-medium">Maintenance Alert</p>
-							<p className="text-sm text-orange-600 mt-1">
-								{getNeedsAttentionCount()} devices need attention
+							<div className="flex items-center mb-2">
+								<AlertTriangle className="w-5 h-5 text-orange-600 mr-2" />
+								<p className="text-orange-800 font-medium">Maintenance Alert</p>
+							</div>
+							<p className="text-sm text-orange-600">
+								{analytics?.overview?.maintenance_needed || 0} devices need attention
+							</p>
+						</div>
+						<div className="bg-purple-50 p-4 rounded-lg">
+							<div className="flex items-center mb-2">
+								<Recycle className="w-5 h-5 text-purple-600 mr-2" />
+								<p className="text-purple-800 font-medium">E-Waste Management</p>
+							</div>
+							<p className="text-sm text-purple-600">
+								{analytics?.overview?.total_disposal_requests || 0} disposal requests processed
 							</p>
 						</div>
 					</div>
 				</motion.div>
 
-				{/* CHARTS */}
+				{/* CORE ANALYTICS CHARTS */}
 				<div className='grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8'>
-					<SalesOverviewChart monthlyTrend={stats?.monthly_trend} />
-					<CategoryDistributionChart conditionData={stats?.condition_breakdown} />
+					<SalesOverviewChart monthlyTrend={analytics?.monthly_trend} />
+					<CategoryDistributionChart conditionData={analytics?.condition_breakdown} />
 				</div>
 				
 				{/* DEVICE TYPES DISTRIBUTION */}
+				<div className='grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8'>
+					<SalesChannelChart deviceTypes={analytics?.device_types} />
+					<DisposalAnalyticsChart disposalAnalytics={analytics?.disposal_analytics} />
+				</div>
+
+				{/* COMMUNITY AND IPFS ANALYTICS */}
 				<div className='grid grid-cols-1 gap-8 mb-8'>
-					<SalesChannelChart deviceTypes={stats?.device_types} />
+					<CommunityIPFSChart 
+						communityAnalytics={analytics?.community_analytics} 
+						ipfsAnalytics={analytics?.ipfs_analytics} 
+					/>
 				</div>
 				
 				{/* RECENT ACTIVITY */}
-				{recentActivity && recentActivity.length > 0 && (
+				{analytics?.recent_activity && analytics.recent_activity.length > 0 && (
 					<motion.div
-						className='mt-8 bg-white bg-opacity-90 backdrop-blur-md shadow-lg rounded-xl p-6 border border-primary-200'
+						className='bg-white bg-opacity-90 backdrop-blur-md shadow-lg rounded-xl p-6 border border-primary-200'
 						initial={{ opacity: 0, y: 20 }}
 						animate={{ opacity: 1, y: 0 }}
 						transition={{ delay: 0.4 }}
 					>
-						<h2 className='text-lg font-medium mb-4 text-primary-800'>Recent Activity</h2>
+						<div className="flex items-center justify-between mb-4">
+							<h2 className='text-lg font-medium text-primary-800'>🔄 Recent Activity</h2>
+							<button
+								onClick={fetchAnalytics}
+								className="px-3 py-1 text-sm bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+							>
+								Refresh
+							</button>
+						</div>
 						<div className='space-y-3'>
-							{recentActivity.slice(0, 5).map((activity, index) => (
-								<div key={index} className='flex items-center justify-between p-3 bg-primary-50 rounded-lg'>
+							{analytics.recent_activity.slice(0, 8).map((activity, index) => (
+								<div key={index} className='flex items-center justify-between p-3 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors'>
 									<div className='flex-1'>
-										<p className='text-sm font-medium text-primary-800'>
-											{activity.device_name}
-										</p>
-										<p className='text-xs text-primary-600'>
-											{activity.action_type} by {activity.performed_by_name}
+										<div className="flex items-center gap-2">
+											<FileText className="w-4 h-4 text-primary-600" />
+											<p className='text-sm font-medium text-primary-800'>
+												{activity.device_name} ({activity.device_type})
+											</p>
+										</div>
+										<p className='text-xs text-primary-600 mt-1'>
+											{activity.action_description} by {activity.performed_by_name}
+											{activity.performed_by_department && activity.performed_by_department !== analytics.overview.department && 
+												` (${activity.performed_by_department})`
+											}
 										</p>
 									</div>
 									<div className='text-xs text-primary-500'>
-										{new Date(activity.action_date).toLocaleDateString()}
+										{new Date(activity.performed_at).toLocaleDateString()}
 									</div>
 								</div>
 							))}
@@ -293,4 +314,5 @@ const HOverviewPage = () => {
 		</div>
 	);
 };
+
 export default HOverviewPage;

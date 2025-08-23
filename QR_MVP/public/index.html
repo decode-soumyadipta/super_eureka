@@ -794,6 +794,7 @@
                 wasteType: { icon: 'fas fa-laptop', label: 'E-Waste Type' },
                 sourceLocation: { icon: 'fas fa-map-marker-alt', label: 'Source Location' },
                 generatedDate: { icon: 'fas fa-calendar', label: 'Generated Date' },
+                registered_date: { icon: 'fas fa-calendar-plus', label: 'Registered Date' },
                 weightKg: { icon: 'fas fa-weight', label: 'Weight (kg)' },
                 recyclable: { icon: 'fas fa-recycle', label: 'Recyclable' },
                 disposalMethod: { icon: 'fas fa-trash-alt', label: 'Disposal Method' },
@@ -801,6 +802,30 @@
                 disposalStatus: { icon: 'fas fa-check-circle', label: 'Disposal Status' },
                 totalCost: { icon: 'fas fa-calculator', label: 'Total Cost' }
             };
+
+            // Function to format date strings
+            function formatDate(dateString) {
+                try {
+                    const date = new Date(dateString);
+                    if (isNaN(date.getTime())) {
+                        return dateString; // Return original if invalid date
+                    }
+                    
+                    const options = {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        timeZoneName: 'short'
+                    };
+                    
+                    return date.toLocaleDateString('en-US', options);
+                } catch (error) {
+                    return dateString; // Return original if formatting fails
+                }
+            }
 
             for (const [key, value] of Object.entries(data)) {
                 if (value !== undefined && value !== null && value !== '') {
@@ -818,6 +843,9 @@
                         displayValue = `$${parseFloat(value).toFixed(2)}`;
                     } else if (key === 'weightKg') {
                         displayValue = `${value} kg`;
+                    } else if (key === 'generatedDate' || key === 'registered_date' || key.toLowerCase().includes('date')) {
+                        // Format any date fields to human-readable format
+                        displayValue = formatDate(value);
                     }
 
                     html += `
@@ -927,13 +955,20 @@
 
         function generatePDFTableRows(data) {
             if (data.rawData) {
-                return `<tr><td>Raw Data</td><td>${data.rawData}</td></tr>`;
+                return `
+                    <tr>
+                        <td>Raw Data</td>
+                        <td>${data.rawData}</td>
+                    </tr>
+                `;
             }
 
+            let rows = '';
             const fieldLabels = {
                 wasteType: 'E-Waste Type',
                 sourceLocation: 'Source Location',
                 generatedDate: 'Generated Date',
+                registered_date: 'Registered Date',
                 weightKg: 'Weight (kg)',
                 recyclable: 'Recyclable',
                 disposalMethod: 'Disposal Method',
@@ -942,14 +977,31 @@
                 totalCost: 'Total Cost'
             };
 
-            let rows = '';
+            // Function to format date strings for PDF
+            function formatDateForPDF(dateString) {
+                try {
+                    const date = new Date(dateString);
+                    if (isNaN(date.getTime())) {
+                        return dateString;
+                    }
+                    return date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                } catch (error) {
+                    return dateString;
+                }
+            }
+
             for (const [key, value] of Object.entries(data)) {
                 if (value !== undefined && value !== null && value !== '') {
                     const label = fieldLabels[key] || key;
                     let displayValue = value;
                     let additionalClass = '';
 
-                    // Special formatting for certain fields
                     if (key === 'recyclable') {
                         displayValue = value === 'true' || value === true ? 'Yes' : 'No';
                         additionalClass = value === 'true' || value === true ? 'recyclable-yes' : 'recyclable-no';
@@ -960,11 +1012,19 @@
                         displayValue = `$${parseFloat(value).toFixed(2)}`;
                     } else if (key === 'weightKg') {
                         displayValue = `${value} kg`;
+                    } else if (key === 'generatedDate' || key === 'registered_date' || key.toLowerCase().includes('date')) {
+                        displayValue = formatDateForPDF(value);
                     }
 
-                    rows += `<tr><td>${label}</td><td class="${additionalClass}">${displayValue}</td></tr>`;
+                    rows += `
+                        <tr>
+                            <td>${label}</td>
+                            <td class="${additionalClass}">${displayValue}</td>
+                        </tr>
+                    `;
                 }
             }
+
             return rows;
         }
 

@@ -93,6 +93,47 @@ const executeQuery = async (query, params = []) => {
     }
 };
 
+// Execute raw SQL query without prepared statements (for triggers, procedures, etc.)
+const executeRawQuery = async (query) => {
+    let connection;
+    try {
+        console.log('🗄️ DATABASE: Executing raw query...');
+        console.log('📝 DATABASE: Query:', query);
+        
+        connection = await pool.getConnection();
+        console.log('✅ DATABASE: Connection acquired');
+        
+        const [rows, fields] = await connection.query(query);
+        console.log('✅ DATABASE: Raw query executed successfully');
+        console.log('📊 DATABASE: Rows affected:', rows.affectedRows || 'N/A');
+        
+        return {
+            success: true,
+            data: rows,
+            affectedRows: rows.affectedRows
+        };
+    } catch (error) {
+        console.error('❌ DATABASE: Raw query execution failed');
+        console.error('❌ DATABASE: Error code:', error.code);
+        console.error('❌ DATABASE: Error message:', error.message);
+        console.error('❌ DATABASE: SQL State:', error.sqlState);
+        console.error('❌ DATABASE: SQL Message:', error.sqlMessage);
+        console.error('❌ DATABASE: Full error:', error);
+        
+        return {
+            success: false,
+            error: error.message,
+            code: error.code,
+            sqlState: error.sqlState
+        };
+    } finally {
+        if (connection) {
+            console.log('🔄 DATABASE: Releasing connection');
+            connection.release();
+        }
+    }
+};
+
 // Initialize database and create tables if they don't exist
 const initializeDatabase = async () => {
     try {
@@ -337,4 +378,4 @@ const initializeDatabase = async () => {
 // Initialize on startup
 initializeDatabase();
 
-export { executeQuery, testConnection, initializeDatabase };
+export { executeQuery, executeRawQuery, testConnection, initializeDatabase };

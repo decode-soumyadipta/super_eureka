@@ -2,6 +2,8 @@ import { initializeDatabase, executeQuery } from '../config/database.js';
 import createDisposalRequestsTable from './create_disposal_requests_table.js';
 import createIPFSUploadsTable from './create_ipfs_uploads_table.js';
 import createCommunityTables from './create_community_tables.js';
+import { createDeviceLogsTable as createDeviceActivityLogsTable } from './create_device_activity_logs.js';
+import process from 'process';
 
 // Create all necessary tables for the e-waste management system
 const createTables = async () => {
@@ -183,6 +185,9 @@ const createTables = async () => {
         if (deptResult.success) {
             console.log('✅ Default departments inserted successfully');
         }
+
+        // Create device activity logging tables
+        await createDeviceActivityLogsTable();
 
         console.log('🎉 Database migration completed successfully!');
         return true;

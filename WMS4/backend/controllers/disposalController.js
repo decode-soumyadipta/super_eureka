@@ -1,6 +1,7 @@
 import { body, validationResult } from 'express-validator';
 import { executeQuery } from '../config/database.js';
 import { nanoid } from 'nanoid';
+import DeviceLogService from '../services/deviceLogService.js';
 
 // Create a new e-waste disposal request
 const createDisposalRequest = async (req, res) => {
@@ -36,7 +37,8 @@ const createDisposalRequest = async (req, res) => {
             preferred_date,
             preferred_time_slot,
             additional_notes,
-            estimated_value
+            estimated_value,
+            device_ids // Array of device IDs included in disposal request
         } = req.body;
 
         // Generate a unique request ID if not provided
@@ -64,25 +66,6 @@ const createDisposalRequest = async (req, res) => {
                 message: 'Valid latitude and longitude coordinates are required'
             });
         }
-
-        console.log('💾 Creating disposal request with data:', {
-            requestId,
-            department: userDepartment,
-            contact_name: userName,
-            contact_phone,
-            contact_email: userEmail,
-            pickup_address,
-            latitude: lat,
-            longitude: lng,
-            e_waste_description,
-            weight_kg: processedWeight,
-            item_count: processedItemCount,
-            preferred_date: processedPreferredDate,
-            preferred_time_slot: preferred_time_slot || null,
-            additional_notes: additional_notes || null,
-            estimated_value: processedEstimatedValue,
-            created_by: userId
-        });
 
         const result = await executeQuery(`
             INSERT INTO disposal_requests (
@@ -127,6 +110,54 @@ const createDisposalRequest = async (req, res) => {
         if (!result.success) {
             console.error('❌ Database error:', result.error);
             throw new Error('Failed to create disposal request: ' + result.error);
+        }
+
+        const disposalRequestDbId = result.data.insertId;
+
+        // Log device activities for all devices included in the disposal request
+        if (device_ids && Array.isArray(device_ids)) {
+            for (const deviceId of device_ids) {
+                await DeviceLogService.logDisposalRequest({
+                    deviceId: deviceId,
+                    disposalRequestId: disposalRequestDbId,
+                    requestType: 'disposal_request',
+                    disposalDetails: {
+                        request_id: requestId,
+                        pickup_address,
+                        preferred_date: processedPreferredDate,
+                        e_waste_description,
+                        weight_kg: processedWeight,
+                        item_count: processedItemCount,
+                        estimated_value: processedEstimatedValue
+                    },
+                    requestedBy: userId,
+                    status: 'pending'
+                });
+
+                // Update device status to indicate it's scheduled for disposal
+                await executeQuery(
+                    'UPDATE devices SET condition_status = ?, disposal_status = ? WHERE id = ?',
+                    ['disposal_pending', 'scheduled', deviceId]
+                );
+
+                // Log the status change
+                await DeviceLogService.logActivity({
+                    deviceId: deviceId,
+                    logType: 'disposal_scheduled',
+                    actionDescription: `Device scheduled for disposal - Request ${requestId}`,
+                    performedBy: userId,
+                    newCondition: 'disposal_pending',
+                    relatedDisposalId: disposalRequestDbId,
+                    metadata: {
+                        disposal_request_id: requestId,
+                        pickup_address,
+                        disposal_type: 'e_waste'
+                    },
+                    notes: `Disposal request created by ${userName}`,
+                    ipAddress: req.ip,
+                    userAgent: req.get('User-Agent')
+                });
+            }
         }
 
         console.log('✅ Disposal request created successfully:', requestId);
@@ -229,7 +260,7 @@ const getDisposalRequestById = async (req, res) => {
 const updateDisposalRequestStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status, vendor_notes } = req.body;
+        const { status, vendor_notes, completion_details } = req.body;
 
         // Validate status value
         const validStatuses = ['pending', 'approved', 'rejected', 'completed', 'in_progress', 'cancelled'];
@@ -240,6 +271,21 @@ const updateDisposalRequestStatus = async (req, res) => {
             });
         }
 
+        // Get disposal request details first
+        const disposalResult = await executeQuery(
+            'SELECT * FROM disposal_requests WHERE request_id = ? OR id = ?',
+            [id, id]
+        );
+
+        if (!disposalResult.success || disposalResult.data.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Disposal request not found'
+            });
+        }
+
+        const disposalRequest = disposalResult.data[0];
+
         // Update the request status
         const updateResult = await executeQuery(`
             UPDATE disposal_requests 
@@ -249,6 +295,88 @@ const updateDisposalRequestStatus = async (req, res) => {
 
         if (!updateResult.success) {
             throw new Error('Failed to update disposal request status');
+        }
+
+        // Get all devices associated with this disposal request and log the status change
+        const deviceResults = await executeQuery(`
+            SELECT device_id FROM device_activity_logs 
+            WHERE related_disposal_id = ? AND log_type = 'disposal_scheduled'
+        `, [disposalRequest.id]);
+
+        if (deviceResults.success && deviceResults.data.length > 0) {
+            for (const deviceRecord of deviceResults.data) {
+                await DeviceLogService.logDisposalRequest({
+                    deviceId: deviceRecord.device_id,
+                    disposalRequestId: disposalRequest.id,
+                    requestType: 'status_update',
+                    disposalDetails: {
+                        previous_status: disposalRequest.status,
+                        new_status: status,
+                        vendor_notes,
+                        completion_details
+                    },
+                    requestedBy: req.user?.id,
+                    status: status
+                });
+
+                // Update device status based on disposal status
+                let newDeviceStatus = null;
+                let newDisposalStatus = null;
+
+                switch (status) {
+                    case 'approved':
+                        newDeviceStatus = 'disposal_approved';
+                        newDisposalStatus = 'approved';
+                        break;
+                    case 'in_progress':
+                        newDeviceStatus = 'disposal_in_progress';
+                        newDisposalStatus = 'in_progress';
+                        break;
+                    case 'completed':
+                        newDeviceStatus = 'disposed';
+                        newDisposalStatus = 'completed';
+                        // Mark device as inactive when disposal is completed
+                        await executeQuery(
+                            'UPDATE devices SET is_active = FALSE WHERE id = ?',
+                            [deviceRecord.device_id]
+                        );
+                        break;
+                    case 'rejected':
+                        newDeviceStatus = 'disposal_rejected';
+                        newDisposalStatus = 'rejected';
+                        break;
+                    case 'cancelled':
+                        newDeviceStatus = 'active'; // Return to active status
+                        newDisposalStatus = 'cancelled';
+                        break;
+                }
+
+                if (newDeviceStatus && newDisposalStatus) {
+                    await executeQuery(
+                        'UPDATE devices SET condition_status = ?, disposal_status = ? WHERE id = ?',
+                        [newDeviceStatus, newDisposalStatus, deviceRecord.device_id]
+                    );
+
+                    await DeviceLogService.logActivity({
+                        deviceId: deviceRecord.device_id,
+                        logType: 'disposal_status_update',
+                        actionDescription: `Disposal status updated to ${status} for request ${disposalRequest.request_id}`,
+                        performedBy: req.user?.id,
+                        previousCondition: disposalRequest.status,
+                        newCondition: newDeviceStatus,
+                        relatedDisposalId: disposalRequest.id,
+                        metadata: {
+                            disposal_request_id: disposalRequest.request_id,
+                            status_change: `${disposalRequest.status} → ${status}`,
+                            vendor_notes,
+                            completion_details
+                        },
+                        notes: vendor_notes || `Status updated by ${req.user?.name || 'system'}`,
+                        ipAddress: req.ip,
+                        userAgent: req.get('User-Agent')
+                    });
+                }
+            }
         }
 
         res.json({
@@ -273,6 +401,67 @@ const updateDisposalRequestStatus = async (req, res) => {
 const deleteDisposalRequest = async (req, res) => {
     try {
         const { id } = req.params;
+
+        // Get disposal request details first
+        const disposalResult = await executeQuery(
+            'SELECT * FROM disposal_requests WHERE request_id = ? OR id = ?',
+            [id, id]
+        );
+
+        if (!disposalResult.success || disposalResult.data.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Disposal request not found'
+            });
+        }
+
+        const disposalRequest = disposalResult.data[0];
+
+        // Get all devices associated with this disposal request
+        const deviceResults = await executeQuery(`
+            SELECT device_id FROM device_activity_logs 
+            WHERE related_disposal_id = ? AND log_type = 'disposal_scheduled'
+        `, [disposalRequest.id]);
+
+        // Log cancellation for all associated devices
+        if (deviceResults.success && deviceResults.data.length > 0) {
+            for (const deviceRecord of deviceResults.data) {
+                await DeviceLogService.logDisposalRequest({
+                    deviceId: deviceRecord.device_id,
+                    disposalRequestId: disposalRequest.id,
+                    requestType: 'cancellation',
+                    disposalDetails: {
+                        cancellation_reason: 'Disposal request deleted',
+                        original_request_id: disposalRequest.request_id
+                    },
+                    requestedBy: req.user?.id,
+                    status: 'cancelled'
+                });
+
+                // Reset device status to active
+                await executeQuery(
+                    'UPDATE devices SET condition_status = ?, disposal_status = ? WHERE id = ?',
+                    ['active', null, deviceRecord.device_id]
+                );
+
+                await DeviceLogService.logActivity({
+                    deviceId: deviceRecord.device_id,
+                    logType: 'disposal_cancelled',
+                    actionDescription: `Disposal request ${disposalRequest.request_id} was deleted/cancelled`,
+                    performedBy: req.user?.id,
+                    previousCondition: 'disposal_pending',
+                    newCondition: 'active',
+                    relatedDisposalId: disposalRequest.id,
+                    metadata: {
+                        disposal_request_id: disposalRequest.request_id,
+                        cancellation_reason: 'Request deleted'
+                    },
+                    notes: `Disposal request deleted by ${req.user?.name || 'user'}`,
+                    ipAddress: req.ip,
+                    userAgent: req.get('User-Agent')
+                });
+            }
+        }
 
         const result = await executeQuery(
             'DELETE FROM disposal_requests WHERE request_id = ? OR id = ?',

@@ -1,6 +1,7 @@
 import { body, validationResult } from 'express-validator';
 import { executeQuery } from '../config/database.js';
 import { nanoid } from 'nanoid';
+import DeviceLogService from '../services/deviceLogService.js';
 
 // Create a new resource exchange request
 const createResourceRequest = async (req, res) => {
@@ -24,7 +25,8 @@ const createResourceRequest = async (req, res) => {
             description,
             urgency,
             preferred_exchange_date,
-            is_exchange
+            is_exchange,
+            device_ids // Array of device IDs included in the request
         } = req.body;
 
         // Generate unique request ID
@@ -61,6 +63,28 @@ const createResourceRequest = async (req, res) => {
 
         if (!result.success) {
             throw new Error('Failed to create resource exchange request');
+        }
+
+        const exchangeRequestId = result.data.insertId;
+
+        // Log device activities for all devices included in the request
+        if (device_ids && Array.isArray(device_ids)) {
+            for (const deviceId of device_ids) {
+                await DeviceLogService.logResourceExchange({
+                    deviceId: deviceId,
+                    exchangeType: 'request',
+                    exchangeId: exchangeRequestId,
+                    requesterId: userId,
+                    exchangeDetails: {
+                        request_id: requestId,
+                        device_type,
+                        description,
+                        urgency,
+                        specifications
+                    },
+                    performedBy: userId
+                });
+            }
         }
 
         console.log('✅ BACKEND: Resource request created successfully:', requestId);
@@ -277,10 +301,29 @@ const createResourceResponse = async (req, res) => {
             throw new Error('Failed to create response');
         }
 
+        const responseId = result.data.insertId;
+
+        // Log device activity for the offered device
+        if (offered_device_id) {
+            await DeviceLogService.logResourceExchange({
+                deviceId: offered_device_id,
+                exchangeType: 'response',
+                exchangeId: request.id,
+                requesterId: request.requester_user_id,
+                responderId: userId,
+                exchangeDetails: {
+                    response_id: responseId,
+                    offer_description,
+                    terms
+                },
+                performedBy: userId
+            });
+        }
+
         res.status(201).json({
             success: true,
             message: 'Response submitted successfully',
-            data: { responseId: result.insertId }
+            data: { responseId: responseId }
         });
 
     } catch (error) {
@@ -310,7 +353,8 @@ const updateResponseStatus = async (req, res) => {
             SELECT 
                 resp.*,
                 req.requester_user_id,
-                req.status as request_status
+                req.status as request_status,
+                req.id as request_id
             FROM resource_exchange_responses resp
             JOIN resource_exchange_requests req ON resp.request_id = req.id
             WHERE resp.id = ?
@@ -341,6 +385,23 @@ const updateResponseStatus = async (req, res) => {
 
         if (!updateResult.success) {
             throw new Error('Failed to update response status');
+        }
+
+        // Log device activity for the offered device
+        if (response.offered_device_id) {
+            await DeviceLogService.logResourceExchange({
+                deviceId: response.offered_device_id,
+                exchangeType: 'accepted',
+                exchangeId: response.request_id,
+                requesterId: response.requester_user_id,
+                responderId: response.responder_user_id,
+                exchangeDetails: {
+                    response_id: responseId,
+                    status,
+                    offer_description: response.offer_description
+                },
+                performedBy: req.user.id
+            });
         }
 
         // If accepted, update request status to matched
@@ -410,6 +471,108 @@ const getUserResourceRequests = async (req, res) => {
     }
 };
 
+// Complete resource exchange (final step)
+const completeResourceExchange = async (req, res) => {
+    try {
+        const { responseId } = req.params;
+        const { completion_notes, transfer_details } = req.body;
+
+        // Get exchange details
+        const exchangeResult = await executeQuery(`
+            SELECT 
+                resp.*,
+                req.requester_user_id,
+                req.request_id
+            FROM resource_exchange_responses resp
+            JOIN resource_exchange_requests req ON resp.request_id = req.id
+            WHERE resp.id = ? AND resp.status = 'accepted'
+        `, [responseId]);
+
+        if (!exchangeResult.success || exchangeResult.data.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Accepted exchange not found'
+            });
+        }
+
+        const exchange = exchangeResult.data[0];
+
+        // Update response status to completed
+        await executeQuery(
+            'UPDATE resource_exchange_responses SET status = ?, completion_notes = ? WHERE id = ?',
+            ['completed', completion_notes, responseId]
+        );
+
+        // Update request status to completed
+        await executeQuery(
+            'UPDATE resource_exchange_requests SET status = ? WHERE id = ?',
+            ['completed', exchange.request_id]
+        );
+
+        // Log completion for the offered device
+        if (exchange.offered_device_id) {
+            await DeviceLogService.logResourceExchange({
+                deviceId: exchange.offered_device_id,
+                exchangeType: 'completed',
+                exchangeId: exchange.request_id,
+                requesterId: exchange.requester_user_id,
+                responderId: exchange.responder_user_id,
+                exchangeDetails: {
+                    response_id: responseId,
+                    completion_notes,
+                    transfer_details
+                },
+                performedBy: req.user.id
+            });
+
+            // If transfer details include new location/department, update device
+            if (transfer_details) {
+                if (transfer_details.new_location) {
+                    await executeQuery(
+                        'UPDATE devices SET current_location = ? WHERE id = ?',
+                        [transfer_details.new_location, exchange.offered_device_id]
+                    );
+
+                    await DeviceLogService.logActivity({
+                        deviceId: exchange.offered_device_id,
+                        logType: 'transfer',
+                        actionDescription: `Device transferred as part of resource exchange ${exchange.request_id}`,
+                        performedBy: req.user.id,
+                        fromUserId: exchange.responder_user_id,
+                        toUserId: exchange.requester_user_id,
+                        toLocation: transfer_details.new_location,
+                        relatedExchangeId: exchange.request_id,
+                        metadata: {
+                            exchange_type: 'resource_transfer',
+                            transfer_details
+                        },
+                        notes: completion_notes
+                    });
+                }
+
+                if (transfer_details.new_department) {
+                    await executeQuery(
+                        'UPDATE devices SET current_department = ? WHERE id = ?',
+                        [transfer_details.new_department, exchange.offered_device_id]
+                    );
+                }
+            }
+        }
+
+        res.json({
+            success: true,
+            message: 'Resource exchange completed successfully'
+        });
+
+    } catch (error) {
+        console.error('❌ BACKEND: Complete resource exchange error:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Internal server error'
+        });
+    }
+};
+
 // Validation rules for creating a resource request
 const resourceRequestValidation = [
     body('device_type')
@@ -441,5 +604,6 @@ export {
     createResourceResponse,
     updateResponseStatus,
     getUserResourceRequests,
+    completeResourceExchange,
     resourceRequestValidation
 };

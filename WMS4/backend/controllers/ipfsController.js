@@ -47,7 +47,7 @@ const upload = multer({
 const uploadFileToIPFS = async (req, res) => {
     try {
         console.log('📥 IPFS Controller: Upload request received');
-        console.log('👤 IPFS Controller: User:', JSON.stringify(req.user, null, 2));
+        console.log('👤 IPFS Controller: User ID:', req.user.id);
         console.log('📋 IPFS Controller: Body:', JSON.stringify(req.body, null, 2));
         console.log('📎 IPFS Controller: File:', req.file ? {
             originalname: req.file.originalname,
@@ -87,8 +87,8 @@ const uploadFileToIPFS = async (req, res) => {
         console.log('📤 IPFS Controller: Starting IPFS upload...');
         const ipfsHash = await uploadToIPFS(req.file.path);
 
-        if (!ipfsHash) {
-            console.log('❌ IPFS Controller: IPFS upload failed');
+        if (!ipfsHash || ipfsHash === 'undefined') {
+            console.log('❌ IPFS Controller: IPFS upload failed or returned invalid hash');
             
             // Clean up uploaded file
             if (fs.existsSync(req.file.path)) {
@@ -97,7 +97,7 @@ const uploadFileToIPFS = async (req, res) => {
             
             return res.status(500).json({
                 success: false,
-                message: 'Failed to upload file to IPFS'
+                message: 'Failed to upload file to IPFS - invalid hash received'
             });
         }
 
@@ -109,8 +109,33 @@ const uploadFileToIPFS = async (req, res) => {
         // Get description from request body
         const description = req.body.description || null;
 
-        // Save upload record to database
+        // Validate that we have valid data before saving to database
+        if (!ipfsHash || ipfsHash === 'unknown' || ipfsHash === 'undefined') {
+            console.error('❌ IPFS Controller: Invalid IPFS hash, cannot save to database');
+            
+            // Clean up uploaded file
+            if (fs.existsSync(req.file.path)) {
+                fs.unlinkSync(req.file.path);
+            }
+            
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to get valid IPFS hash'
+            });
+        }
+
+        // Save upload record to database with transaction
         console.log('💾 IPFS Controller: Saving upload record to database...');
+        console.log('🔍 IPFS Controller: Data to save:', {
+            user_id: req.user.id,
+            original_filename: req.file.originalname,
+            file_type: req.file.mimetype,
+            file_size: req.file.size,
+            ipfs_hash: ipfsHash,
+            ipfs_url: ipfsUrl,
+            description: description
+        });
+
         const result = await executeQuery(`
             INSERT INTO ipfs_uploads (
                 user_id,
@@ -143,32 +168,51 @@ const uploadFileToIPFS = async (req, res) => {
             console.error('❌ IPFS Controller: Database save failed:', result.error);
             return res.status(500).json({
                 success: false,
-                message: 'Failed to save upload record'
+                message: 'Failed to save upload record: ' + result.error
             });
         }
 
         console.log('✅ IPFS Controller: Upload record saved successfully, Insert ID:', result.insertId);
 
-        // Construct the response with proper data structure
+        // Verify the record was actually saved by querying it back
+        const verifyResult = await executeQuery(`
+            SELECT * FROM ipfs_uploads WHERE id = ?
+        `, [result.insertId]);
+
+        if (!verifyResult.success || verifyResult.data.length === 0) {
+            console.error('❌ IPFS Controller: Failed to verify saved record');
+            return res.status(500).json({
+                success: false,
+                message: 'Upload record could not be verified'
+            });
+        }
+
+        const savedRecord = verifyResult.data[0];
+        console.log('✅ IPFS Controller: Verified saved record:', savedRecord);
+
+        // Construct the response with consistent data structure
         const responseData = {
             success: true,
             message: 'File uploaded to IPFS successfully',
             data: {
-                id: result.insertId,
-                originalFilename: req.file.originalname,
-                fileType: req.file.mimetype,
-                fileSize: req.file.size,
-                ipfsHash: ipfsHash, // Make sure this is the actual hash, not undefined
-                ipfsUrl: ipfsUrl,   // Make sure this is the actual URL, not undefined
-                description: description,
-                uploadDate: new Date().toISOString(),
-                status: 'uploaded'
+                id: savedRecord.id,
+                originalFilename: savedRecord.original_filename,
+                fileType: savedRecord.file_type,
+                fileSize: savedRecord.file_size,
+                ipfsHash: savedRecord.ipfs_hash,
+                ipfs_hash: savedRecord.ipfs_hash, // Add both formats for compatibility
+                ipfsUrl: savedRecord.ipfs_url,
+                ipfs_url: savedRecord.ipfs_url, // Add both formats for compatibility
+                description: savedRecord.description,
+                uploadDate: savedRecord.upload_date,
+                upload_date: savedRecord.upload_date, // Add both formats for compatibility
+                status: savedRecord.status
             }
         };
 
         console.log('📤 IPFS Controller: Sending response:', JSON.stringify(responseData, null, 2));
-        console.log('🔍 IPFS Controller: IPFS Hash being sent:', ipfsHash);
-        console.log('🔍 IPFS Controller: IPFS URL being sent:', ipfsUrl);
+        console.log('🔍 IPFS Controller: Final IPFS Hash:', savedRecord.ipfs_hash);
+        console.log('🔍 IPFS Controller: Final IPFS URL:', savedRecord.ipfs_url);
 
         res.status(201).json(responseData);
 

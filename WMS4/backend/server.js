@@ -73,6 +73,13 @@ import {
     resourceRequestValidation
 } from './controllers/resourceExchangeController.js';
 
+// Import analytics controller
+import {
+    getDashboardAnalytics,
+    getDeviceUtilization,
+    getSustainabilityMetrics
+} from './controllers/analyticsController.js';
+
 // Import middleware
 import { authenticateToken, requireAdmin, requireSameDepartment } from './middleware/auth.js';
 
@@ -365,6 +372,19 @@ app.post('/api/resource-exchange/requests/:requestId/responses', authenticateTok
 
 // Update response status (accept/reject) (protected)
 app.put('/api/resource-exchange/responses/:responseId/status', authenticateToken, updateResponseStatus);
+
+// =====================
+// Analytics Routes (New)
+// =====================
+
+// Get comprehensive dashboard analytics (protected)
+app.get('/api/analytics/dashboard', authenticateToken, getDashboardAnalytics);
+
+// Get device utilization insights (protected)
+app.get('/api/analytics/utilization', authenticateToken, getDeviceUtilization);
+
+// Get sustainability metrics (protected)
+app.get('/api/analytics/sustainability', authenticateToken, getSustainabilityMetrics);
 
 // =====================
 // Admin Routes

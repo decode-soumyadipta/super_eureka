@@ -10,6 +10,8 @@ import UsersPage from "./pages/UsersPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import DisposalPage from "./pages/DisposalPage";
 import DashboardLogin from './pages/DashboardLogin';
+import CommunityPage from './pages/CommunityPage';
+import ResourceExchangePage from './pages/ResourceExchangePage';
 import { authService } from './services/authService.js';
 import IPFSUploadPage from './pages/IPFSUploadPage.jsx';
 
@@ -125,6 +127,16 @@ function App() {
                 <Route path='/disposal' element={
                     <ProtectedRoute>
                         <DisposalPage />
+                    </ProtectedRoute>
+                } />
+                <Route path='/community' element={
+                    <ProtectedRoute>
+                        <CommunityPage />
+                    </ProtectedRoute>
+                } />
+                <Route path='/resource-exchange' element={
+                    <ProtectedRoute>
+                        <ResourceExchangePage />
                     </ProtectedRoute>
                 } />
                 <Route path='/ipfs-upload' element={

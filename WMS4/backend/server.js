@@ -3,8 +3,14 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { testConnection, initializeDatabase } from './config/database.js';
 import { createTables } from './migrations/migrate.js';
+
+// Get current directory path for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Import controllers
 import { 
@@ -45,6 +51,28 @@ import {
     upload 
 } from './controllers/ipfsController.js';
 
+// Import community controller
+import {
+    createPost,
+    getPosts,
+    getPostComments,
+    addComment,
+    toggleLike,
+    postValidation,
+    upload as communityUpload
+} from './controllers/communityController.js';
+
+// Import resource exchange controller
+import {
+    createResourceRequest,
+    getResourceRequests,
+    getResourceRequestById,
+    createResourceResponse,
+    updateResponseStatus,
+    getUserResourceRequests,
+    resourceRequestValidation
+} from './controllers/resourceExchangeController.js';
+
 // Import middleware
 import { authenticateToken, requireAdmin, requireSameDepartment } from './middleware/auth.js';
 
@@ -55,7 +83,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(cors({
     origin: process.env.CLIENT_URL || 'http://localhost:5173',
     credentials: true
@@ -79,6 +109,56 @@ const authLimiter = rateLimit({
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files (for uploaded community media) - Fix the static file serving
+const uploadsPath = path.join(__dirname, 'uploads');
+console.log('📁 STATIC: Serving uploads from absolute path:', uploadsPath);
+
+// Add proper static file serving with correct headers
+app.use('/uploads', express.static(uploadsPath, {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.png') || path.endsWith('.gif')) {
+            res.setHeader('Content-Type', 'image/' + path.split('.').pop().toLowerCase());
+        } else if (path.endsWith('.mp4')) {
+            res.setHeader('Content-Type', 'video/mp4');
+        } else if (path.endsWith('.mov')) {
+            res.setHeader('Content-Type', 'video/quicktime');
+        } else if (path.endsWith('.avi')) {
+            res.setHeader('Content-Type', 'video/x-msvideo');
+        }
+    }
+}));
+
+// Add a debug endpoint to test file serving
+app.get('/api/debug/uploads/:filename', (req, res) => {
+    const { filename } = req.params;
+    const filePath = path.join(uploadsPath, 'community', filename);
+    const fs = require('fs');
+    
+    if (fs.existsSync(filePath)) {
+        res.json({
+            success: true,
+            message: 'File exists',
+            filePath: filePath,
+            url: `http://localhost:${PORT}/uploads/community/${filename}`
+        });
+    } else {
+        res.json({
+            success: false,
+            message: 'File not found',
+            filePath: filePath
+        });
+    }
+});
+
+// Add a test endpoint to verify file serving
+app.get('/test-uploads', (req, res) => {
+    res.json({
+        message: 'Testing uploads directory',
+        uploadsPath: uploadsPath,
+        exists: require('fs').existsSync(uploadsPath)
+    });
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -139,6 +219,25 @@ app.get('/api/disposal/requests/:requestId', authenticateToken, getDisposalReque
 
 // Update disposal request status (protected - vendor/admin only)
 app.put('/api/disposal/requests/:requestId/status', authenticateToken, updateDisposalRequestStatus);
+
+// =====================
+// Community Routes
+// =====================
+
+// Create new community post (protected)
+app.post('/api/community/posts', authenticateToken, communityUpload.array('media', 5), postValidation, createPost);
+
+// Get all community posts (protected)
+app.get('/api/community/posts', authenticateToken, getPosts);
+
+// Get comments for a specific post (protected)
+app.get('/api/community/posts/:postId/comments', authenticateToken, getPostComments);
+
+// Add comment to a post (protected)
+app.post('/api/community/posts/:postId/comments', authenticateToken, addComment);
+
+// Like/unlike a post (protected)
+app.post('/api/community/posts/:postId/like', authenticateToken, toggleLike);
 
 // =====================
 // IPFS Upload Routes
@@ -244,6 +343,28 @@ app.get('/api/departments/stats', authenticateToken, async (req, res) => {
         });
     }
 });
+
+// =====================
+// Resource Exchange Routes
+// =====================
+
+// Create new resource exchange request (protected)
+app.post('/api/resource-exchange/requests', authenticateToken, resourceRequestValidation, createResourceRequest);
+
+// Get all resource exchange requests (protected)
+app.get('/api/resource-exchange/requests', authenticateToken, getResourceRequests);
+
+// Get user's own resource requests (protected)
+app.get('/api/resource-exchange/my-requests', authenticateToken, getUserResourceRequests);
+
+// Get resource exchange request by ID (protected)
+app.get('/api/resource-exchange/requests/:requestId', authenticateToken, getResourceRequestById);
+
+// Create response to a resource exchange request (protected)
+app.post('/api/resource-exchange/requests/:requestId/responses', authenticateToken, createResourceResponse);
+
+// Update response status (accept/reject) (protected)
+app.put('/api/resource-exchange/responses/:responseId/status', authenticateToken, updateResponseStatus);
 
 // =====================
 // Admin Routes

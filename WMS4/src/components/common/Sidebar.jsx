@@ -1,4 +1,4 @@
-import { BarChart2, DollarSign, Menu, QrCode, Settings, ShoppingBag, ShoppingCart, TrendingUp, Users, LogOut, User, Trash2, Globe, Upload } from "lucide-react";
+import { BarChart2, DollarSign, Menu, QrCode, Settings, ShoppingBag, ShoppingCart, TrendingUp, Users, LogOut, User, Trash2, Globe, Upload, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
@@ -56,11 +56,16 @@ const SIDEBAR_ITEMS = [
 		href: "/disposal",
 	},
 	{
-		name: "E-Shunya Awareness",
+		name: "E-Shunya Community",
 		icon: Globe,
 		color: "#2196f3",
-		href: "/e-shunya-community",
-		external: true
+		href: "/community",
+	},
+	{
+		name: "Resource Exchange",
+		icon: RefreshCw,
+		color: "#673ab7",
+		href: "/resource-exchange",
 	},
 	{
 		name: "Upload Report to IPFS",

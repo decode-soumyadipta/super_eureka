@@ -1,6 +1,7 @@
 import { initializeDatabase, executeQuery } from '../config/database.js';
 import createDisposalRequestsTable from './create_disposal_requests_table.js';
 import createIPFSUploadsTable from './create_ipfs_uploads_table.js';
+import createCommunityTables from './create_community_tables.js';
 
 // Create all necessary tables for the e-waste management system
 const createTables = async () => {
@@ -135,6 +136,7 @@ const createTables = async () => {
                 preferred_date DATE,
                 preferred_time_slot VARCHAR(50),
                 additional_notes TEXT,
+                estimated_value DECIMAL(12, 2),
                 status ENUM('pending', 'approved', 'rejected', 'completed') DEFAULT 'pending',
                 created_by INT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -195,13 +197,19 @@ async function runMigrations() {
     console.log('🚀 Starting database migrations...');
     
     try {
+        // Run main tables migration
+        const mainTablesCreated = await createTables();
+        
         // Run disposal requests table migration
         const disposalTableCreated = await createDisposalRequestsTable();
         
         // Run IPFS uploads table migration
         const ipfsTableCreated = await createIPFSUploadsTable();
         
-        if (disposalTableCreated && ipfsTableCreated) {
+        // Run community tables migration
+        const communityTablesCreated = await createCommunityTables();
+        
+        if (mainTablesCreated && disposalTableCreated && ipfsTableCreated && communityTablesCreated) {
             console.log('✅ All migrations completed successfully');
         } else {
             console.log('⚠️ Some migrations failed');

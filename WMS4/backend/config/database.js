@@ -188,6 +188,144 @@ const initializeDatabase = async () => {
             console.log('✅ DATABASE: ipfs_uploads table ready');
         }
 
+        // Create community tables
+        console.log('🏗️ DATABASE: Creating community tables...');
+        
+        // Create posts table
+        const createPostsTableResult = await executeQuery(`
+            CREATE TABLE IF NOT EXISTS community_posts (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                content TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                is_active BOOLEAN DEFAULT TRUE,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                INDEX idx_user_id (user_id),
+                INDEX idx_created_at (created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+        
+        if (createPostsTableResult.success) {
+            console.log('✅ DATABASE: community_posts table ready');
+        }
+
+        // Create media table
+        const createMediaTableResult = await executeQuery(`
+            CREATE TABLE IF NOT EXISTS community_media (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                post_id INT NOT NULL,
+                file_name VARCHAR(255) NOT NULL,
+                file_type ENUM('image', 'video') NOT NULL,
+                file_path VARCHAR(500) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (post_id) REFERENCES community_posts(id) ON DELETE CASCADE,
+                INDEX idx_post_id (post_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+        
+        if (createMediaTableResult.success) {
+            console.log('✅ DATABASE: community_media table ready');
+        }
+
+        // Create likes table
+        const createLikesTableResult = await executeQuery(`
+            CREATE TABLE IF NOT EXISTS community_likes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                post_id INT NOT NULL,
+                user_id INT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (post_id) REFERENCES community_posts(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                UNIQUE KEY unique_like (post_id, user_id),
+                INDEX idx_post_id (post_id),
+                INDEX idx_user_id (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+        
+        if (createLikesTableResult.success) {
+            console.log('✅ DATABASE: community_likes table ready');
+        }
+
+        // Create comments table
+        const createCommentsTableResult = await executeQuery(`
+            CREATE TABLE IF NOT EXISTS community_comments (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                post_id INT NOT NULL,
+                user_id INT NOT NULL,
+                content TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (post_id) REFERENCES community_posts(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                INDEX idx_post_id (post_id),
+                INDEX idx_user_id (user_id),
+                INDEX idx_created_at (created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+        
+        if (createCommentsTableResult.success) {
+            console.log('✅ DATABASE: community_comments table ready');
+        }
+
+        // Create resource exchange tables
+        console.log('🏗️ DATABASE: Creating resource exchange tables...');
+        
+        // Create resource requests table
+        const createResourceRequestsTableResult = await executeQuery(`
+            CREATE TABLE IF NOT EXISTS resource_exchange_requests (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                request_id VARCHAR(50) NOT NULL UNIQUE,
+                requester_user_id INT NOT NULL,
+                requester_department VARCHAR(100) NOT NULL,
+                device_type VARCHAR(100) NOT NULL,
+                specifications JSON,
+                description TEXT NOT NULL,
+                urgency ENUM('low', 'medium', 'high') DEFAULT 'medium',
+                preferred_exchange_date DATE,
+                is_exchange BOOLEAN DEFAULT TRUE,
+                status ENUM('open', 'matched', 'completed', 'cancelled') DEFAULT 'open',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (requester_user_id) REFERENCES users(id) ON DELETE CASCADE,
+                INDEX idx_status (status),
+                INDEX idx_requester_department (requester_department),
+                INDEX idx_device_type (device_type),
+                INDEX idx_created_at (created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+        
+        if (createResourceRequestsTableResult.success) {
+            console.log('✅ DATABASE: resource_exchange_requests table ready');
+        }
+
+        // Create resource responses table
+        const createResourceResponsesTableResult = await executeQuery(`
+            CREATE TABLE IF NOT EXISTS resource_exchange_responses (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                request_id INT NOT NULL,
+                responder_user_id INT NOT NULL,
+                responder_department VARCHAR(100) NOT NULL,
+                offered_device_id INT,
+                offer_description TEXT NOT NULL,
+                terms TEXT,
+                response_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                status ENUM('pending', 'accepted', 'rejected', 'withdrawn') DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (request_id) REFERENCES resource_exchange_requests(id) ON DELETE CASCADE,
+                FOREIGN KEY (responder_user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (offered_device_id) REFERENCES devices(id) ON DELETE SET NULL,
+                INDEX idx_request_id (request_id),
+                INDEX idx_responder_department (responder_department),
+                INDEX idx_status (status),
+                INDEX idx_response_date (response_date)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+        
+        if (createResourceResponsesTableResult.success) {
+            console.log('✅ DATABASE: resource_exchange_responses table ready');
+        }
+
         console.log('✅ DATABASE: Database initialization complete');
         return true;
     } catch (error) {

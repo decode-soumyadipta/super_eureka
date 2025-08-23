@@ -172,8 +172,8 @@ const createDeviceLogsTable = async () => {
                 expected_duration_days INT,
                 actual_duration_days INT,
                 stage_status ENUM('pending', 'in_progress', 'completed', 'failed', 'cancelled') DEFAULT 'pending',
-                started_at TIMESTAMP,
-                completed_at TIMESTAMP,
+                started_at TIMESTAMP NULL,
+                completed_at TIMESTAMP NULL,
                 managed_by INT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 
@@ -197,16 +197,16 @@ const createDeviceLogsTable = async () => {
             FOR EACH ROW
             BEGIN
                 -- Log condition changes
-                IF OLD.condition != NEW.condition THEN
+                IF OLD.condition_status != NEW.condition_status THEN
                     INSERT INTO device_activity_logs (
                         device_id, log_type, action_description,
                         previous_condition, new_condition,
                         performed_by, performed_at
                     ) VALUES (
                         NEW.id, 'condition_update',
-                        CONCAT('Device condition changed from ', OLD.condition, ' to ', NEW.condition),
-                        OLD.condition, NEW.condition,
-                        NEW.updated_by, NOW()
+                        CONCAT('Device condition changed from ', OLD.condition_status, ' to ', NEW.condition_status),
+                        OLD.condition_status, NEW.condition_status,
+                        COALESCE(NEW.assigned_to, NEW.registered_by), NOW()
                     );
                 END IF;
 
@@ -220,35 +220,39 @@ const createDeviceLogsTable = async () => {
                         NEW.id, 'location_update',
                         CONCAT('Device moved from ', IFNULL(OLD.current_location, 'Unknown'), ' to ', NEW.current_location),
                         OLD.current_location, NEW.current_location,
-                        NEW.updated_by, NOW()
+                        COALESCE(NEW.assigned_to, NEW.registered_by), NOW()
                     );
                 END IF;
 
                 -- Log department changes
-                IF OLD.department != NEW.department THEN
+                IF OLD.current_department != NEW.current_department THEN
                     INSERT INTO device_activity_logs (
                         device_id, log_type, action_description,
                         from_department, to_department,
                         performed_by, performed_at
                     ) VALUES (
                         NEW.id, 'department_transfer',
-                        CONCAT('Device transferred from ', IFNULL(OLD.department, 'Unknown'), ' to ', NEW.department),
-                        OLD.department, NEW.department,
-                        NEW.updated_by, NOW()
+                        CONCAT('Device transferred from ', IFNULL(OLD.current_department, 'Unknown'), ' to ', NEW.current_department),
+                        OLD.current_department, NEW.current_department,
+                        COALESCE(NEW.assigned_to, NEW.registered_by), NOW()
                     );
                 END IF;
 
-                -- Log status changes
-                IF OLD.status != NEW.status THEN
+                -- Log assignment changes
+                IF OLD.assigned_to != NEW.assigned_to THEN
                     INSERT INTO device_activity_logs (
                         device_id, log_type, action_description,
-                        previous_status, new_status,
+                        from_user_id, to_user_id,
                         performed_by, performed_at
                     ) VALUES (
-                        NEW.id, 'status_change',
-                        CONCAT('Device status changed from ', OLD.status, ' to ', NEW.status),
-                        OLD.status, NEW.status,
-                        NEW.updated_by, NOW()
+                        NEW.id, 'transfer',
+                        CASE 
+                            WHEN NEW.assigned_to IS NULL THEN 'Device unassigned'
+                            WHEN OLD.assigned_to IS NULL THEN 'Device assigned'
+                            ELSE 'Device reassigned'
+                        END,
+                        OLD.assigned_to, NEW.assigned_to,
+                        COALESCE(NEW.assigned_to, NEW.registered_by), NOW()
                     );
                 END IF;
             END
@@ -263,14 +267,14 @@ const createDeviceLogsTable = async () => {
                 INSERT INTO device_activity_logs (
                     device_id, log_type, action_description,
                     to_location, to_department,
-                    new_condition, new_status,
+                    new_condition,
                     performed_by, performed_at
                 ) VALUES (
                     NEW.id, 'registration',
-                    CONCAT('Device registered: ', NEW.model, ' (', NEW.serial_number, ')'),
-                    NEW.current_location, NEW.department,
-                    NEW.condition, NEW.status,
-                    NEW.created_by, NEW.created_at
+                    CONCAT('Device registered: ', COALESCE(NEW.model, 'Unknown Model'), ' (', COALESCE(NEW.serial_number, 'No Serial'), ')'),
+                    NEW.current_location, NEW.current_department,
+                    NEW.condition_status,
+                    NEW.registered_by, NEW.registration_date
                 );
 
                 -- Create initial lifecycle event
@@ -279,7 +283,7 @@ const createDeviceLogsTable = async () => {
                     stage_status, started_at, managed_by
                 ) VALUES (
                     NEW.id, 'procurement', 'Device procured and registered in system',
-                    'completed', NEW.created_at, NEW.created_by
+                    'completed', NEW.registration_date, NEW.registered_by
                 );
             END
         `);

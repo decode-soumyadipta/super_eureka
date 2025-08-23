@@ -4,6 +4,7 @@ import { X, QrCode, Camera } from "lucide-react";
 import { toast } from "react-toastify";
 import { deviceService } from "../../services/deviceService.js";
 import AIDeviceDetection from "./AIDeviceDetection.jsx";
+import BarcodeOCRModal from "./BarcodeOCRModal.jsx";
 
 const DeviceRegistrationModal = ({ isOpen, onClose, onDeviceRegistered }) => {
     const [formData, setFormData] = useState({
@@ -27,6 +28,7 @@ const DeviceRegistrationModal = ({ isOpen, onClose, onDeviceRegistered }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [qrCodeData, setQrCodeData] = useState(null);
     const [showAIDetection, setShowAIDetection] = useState(false);
+    const [showOCRModal, setShowOCRModal] = useState(false);
 
     const deviceTypes = [
         "Laptop", "Desktop", "Monitor", "Printer", "Scanner", 
@@ -134,6 +136,21 @@ const DeviceRegistrationModal = ({ isOpen, onClose, onDeviceRegistered }) => {
 
         toast.success(`Device detected as ${detectionResult.detected_class} with ${detectionResult.confidence}% confidence!`);
         setShowAIDetection(false);
+        // Open OCR modal for barcode/label scan
+        setShowOCRModal(true);
+    };
+    // Handle OCR result and auto-fill serial number
+    const handleOCRResult = (ocrText) => {
+        // Try to extract a serial number (number below barcode)
+        // Simple regex for numbers, can be improved
+        const match = ocrText.match(/\d{6,}/);
+        const serial = match ? match[0] : ocrText.trim();
+        setFormData(prev => ({
+            ...prev,
+            serial_number: serial
+        }));
+        toast.success("Serial number extracted and filled!");
+        setShowOCRModal(false);
     };
 
     if (!isOpen) return null;
@@ -551,6 +568,13 @@ const DeviceRegistrationModal = ({ isOpen, onClose, onDeviceRegistered }) => {
                     isOpen={showAIDetection}
                     onClose={() => setShowAIDetection(false)} 
                     onDetectionResult={handleAIDetectionResult} 
+                />
+            )}
+            {showOCRModal && (
+                <BarcodeOCRModal
+                    isOpen={showOCRModal}
+                    onClose={() => setShowOCRModal(false)}
+                    onOCRResult={handleOCRResult}
                 />
             )}
         </div>
